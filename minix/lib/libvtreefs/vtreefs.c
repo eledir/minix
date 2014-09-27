@@ -106,7 +106,7 @@ run_vtreefs(struct fs_hooks * hooks, unsigned int nr_inodes,
 
 	sef_local_startup();
 
-	fsdriver_task(&vtreefs_table);
+	fsdriver_task(&vtreefs_table, 0);
 
 	cleanup_buf();
 	cleanup_inodes();

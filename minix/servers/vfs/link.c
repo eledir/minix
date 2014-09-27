@@ -75,7 +75,7 @@ int do_link(void)
 
   if (r == OK)
 	r = req_link(vp->v_fs_e, dirp->v_inode_nr, fullpath,
-		     vp->v_inode_nr);
+		     vp->v_inode_nr, fp);
 
   unlock_vnode(vp);
   unlock_vnode(dirp);
@@ -105,7 +105,7 @@ int do_unlink(void)
   if (copy_path(fullpath, sizeof(fullpath)) != OK)
 	return(err_code);
 
-  lookup_init(&resolve, fullpath, PATH_RET_SYMLINK, &vmp, &dirp_l);
+  lookup_init(&resolve, fullpath, PATH_RET_SYMLINK|PATH_CHECK_WRITE|PATH_CHECK_LOOKUP, &vmp, &dirp_l);
   resolve.l_vmnt_lock = VMNT_WRITE;
   resolve.l_vnode_lock = VNODE_WRITE;
 
@@ -155,9 +155,9 @@ int do_unlink(void)
   upgrade_vmnt_lock(vmp);
 
   if (job_call_nr == VFS_UNLINK)
-	  r = req_unlink(dirp->v_fs_e, dirp->v_inode_nr, fullpath);
+	  r = req_unlink(dirp->v_fs_e, dirp->v_inode_nr, fullpath, fp);
   else
-	  r = req_rmdir(dirp->v_fs_e, dirp->v_inode_nr, fullpath);
+	  r = req_rmdir(dirp->v_fs_e, dirp->v_inode_nr, fullpath, fp);
   unlock_vnode(dirp);
   unlock_vmnt(vmp);
   put_vnode(dirp);
@@ -257,7 +257,7 @@ int do_rename(void)
   if (r == OK) {
 	upgrade_vmnt_lock(oldvmp); /* Upgrade to exclusive access */
 	r = req_rename(old_dirp->v_fs_e, old_dirp->v_inode_nr, old_name,
-		       new_dirp->v_inode_nr, fullpath);
+		       new_dirp->v_inode_nr, fullpath, fp);
   }
 
   unlock_vnode(old_dirp);
@@ -377,7 +377,7 @@ off_t newsize;
    * called for open(2), which requires an update to the file times if O_TRUNC
    * is given, even if the file size remains the same.
    */
-  if ((r = req_ftrunc(vp->v_fs_e, vp->v_inode_nr, newsize, 0)) == OK)
+  if ((r = req_ftrunc(vp->v_fs_e, vp->v_inode_nr, newsize, 0, fp)) == OK)
 	vp->v_size = newsize;
   return(r);
 }
@@ -415,7 +415,7 @@ int do_slink(void)
   if ((r = forbidden(fp, vp, W_BIT|X_BIT)) == OK) {
 	r = req_slink(vp->v_fs_e, vp->v_inode_nr, fullpath, who_e,
 		      vname1, vname1_length - 1, fp->fp_effuid,
-		      fp->fp_effgid);
+		      fp->fp_effgid, fp);
   }
 
   unlock_vnode(vp);

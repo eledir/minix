@@ -16,7 +16,7 @@ set -e
 : ${FSTAB=${DESTDIR}/etc/fstab}
 : ${BUILDVARS=}
 : ${BUILDSH=build.sh}
-: ${CREATE_IMAGE_ONLY=0}
+: ${CREATE_IMAGE_ONLY=1}
 : ${RC=minix_x86.rc}
 
 #

@@ -6,6 +6,7 @@
  */
 
 #include "fs.h"
+#include <minix/callnr.h>
 #include <minix/com.h>
 #include <minix/const.h>
 #include <minix/endpoint.h>
@@ -23,6 +24,54 @@
 #include "vmnt.h"
 #include "vnode.h"
 
+static void req_write_user_credentials(endpoint_t fs_e, message *m,
+	struct fproc *rfp, vfs_ucred_t *credentials, cp_grant_id_t *grant)
+{
+	(void)fs_e;
+	(void)credentials;
+	(void)grant;
+	
+	/* Is the process member of multiple groups? */
+	if (rfp->fp_ngroups > 0) {
+		/* In that case the FS has to copy the uid/gid credentials */
+		int i;
+
+		/* Set credentials */
+		if (job_call_nr == VFS_ACCESS) {
+			credentials->vu_uid = rfp->fp_realuid;
+			credentials->vu_gid = rfp->fp_realuid;
+		}
+		else {
+			credentials->vu_uid = rfp->fp_effuid;
+			credentials->vu_gid = rfp->fp_effgid;
+		}
+		credentials->vu_ngroups = rfp->fp_ngroups;
+		for (i = 0; i < rfp->fp_ngroups; i++)
+			credentials->vu_sgroups[i] = rfp->fp_sgroups[i];
+
+		*grant = cpf_grant_direct(fs_e, (vir_bytes) credentials,
+					sizeof(*credentials), CPF_READ);
+		if(*grant == -1)
+			panic("req_write_user_credentials: cpf_grant_direct "
+			      "failed");
+
+		m->m_vfs_fs_lookup.grant_ucred	= *grant;
+		m->m_vfs_fs_lookup.ucred_size	= sizeof(*credentials);
+	}
+	else {
+		/* When there's only one gid, we can send it directly */
+		if (job_call_nr == VFS_ACCESS) {
+			m->m_vfs_fs_lookup.ucred_uid = rfp->fp_realuid;
+			m->m_vfs_fs_lookup.ucred_gid = rfp->fp_realuid;
+		}
+		else {
+			m->m_vfs_fs_lookup.ucred_uid = rfp->fp_effuid;
+			m->m_vfs_fs_lookup.ucred_gid = rfp->fp_effgid;
+		}
+		m->m_vfs_fs_lookup.grant_ucred	= 0;
+		m->m_vfs_fs_lookup.ucred_size	= 0;
+	}
+}
 
 /*===========================================================================*
  *			req_breadwrite_actual				     *
@@ -107,10 +156,13 @@ int req_chmod(
   endpoint_t fs_e,
   ino_t inode_nr,
   mode_t rmode,
-  mode_t *new_modep
+  mode_t *new_modep,
+  struct fproc *rfp
 )
 {
   message m;
+  vfs_ucred_t ucred;
+  cp_grant_id_t grant_ucred;
   int r;
 
   /* Fill in request message */
@@ -118,8 +170,11 @@ int req_chmod(
   m.m_vfs_fs_chmod.inode = inode_nr;
   m.m_vfs_fs_chmod.mode = rmode;
 
+  req_write_user_credentials(fs_e, &m, rfp, &ucred, &grant_ucred);
+
   /* Send/rec request */
   r = fs_sendrec(fs_e, &m);
+  if(grant_ucred != 0) cpf_revoke(grant_ucred);
 
   /* Copy back actual mode. */
   *new_modep = m.m_fs_vfs_chmod.mode;
@@ -136,10 +191,13 @@ int req_chown(
   ino_t inode_nr,
   uid_t newuid,
   gid_t newgid,
-  mode_t *new_modep
+  mode_t *new_modep,
+  struct fproc *rfp
 )
 {
   message m;
+  vfs_ucred_t ucred;
+  cp_grant_id_t grant_ucred;
   int r;
 
   /* Fill in request message */
@@ -148,8 +206,11 @@ int req_chown(
   m.m_vfs_fs_chown.uid = newuid;
   m.m_vfs_fs_chown.gid = newgid;
 
+  req_write_user_credentials(fs_e, &m, rfp, &ucred, &grant_ucred);
+
   /* Send/rec request */
   r = fs_sendrec(fs_e, &m);
+  if(grant_ucred != 0) cpf_revoke(grant_ucred);
 
   /* Return new mode to caller. */
   *new_modep = m.m_fs_vfs_chown.mode;
@@ -168,11 +229,13 @@ int req_create(
   uid_t uid,
   gid_t gid,
   char *path,
-  node_details_t *res
+  node_details_t *res,
+  struct fproc *rfp
 )
 {
   int r;
-  cp_grant_id_t grant_id;
+  vfs_ucred_t ucred;
+  cp_grant_id_t grant_id, grant_ucred;
   size_t len;
   message m;
   struct vmnt *vmp;
@@ -193,9 +256,12 @@ int req_create(
   m.m_vfs_fs_create.grant = grant_id;
   m.m_vfs_fs_create.path_len = len;
 
+  req_write_user_credentials(fs_e, &m, rfp, &ucred, &grant_ucred);
+
   /* Send/rec request */
   r = fs_sendrec(fs_e, &m);
   cpf_revoke(grant_id);
+  if(grant_ucred != 0) cpf_revoke(grant_ucred);
   if (r != OK) return(r);
 
   /* Fill in response structure */
@@ -256,10 +322,14 @@ int req_statvfs(endpoint_t fs_e, struct statvfs *buf)
 /*===========================================================================*
  *				req_ftrunc	     			     *
  *===========================================================================*/
-int req_ftrunc(endpoint_t fs_e, ino_t inode_nr, off_t start, off_t end)
+int req_ftrunc(endpoint_t fs_e, ino_t inode_nr, off_t start, off_t end, 
+	struct fproc *rfp)
 {
   message m;
   struct vmnt *vmp;
+  vfs_ucred_t ucred;
+  cp_grant_id_t grant_ucred;
+  int r;
 
   vmp = find_vmnt(fs_e);
 
@@ -275,8 +345,13 @@ int req_ftrunc(endpoint_t fs_e, ino_t inode_nr, off_t start, off_t end)
 	return EINVAL;
   }
 
+  req_write_user_credentials(fs_e, &m, rfp, &ucred, &grant_ucred);
+
   /* Send/rec request */
-  return fs_sendrec(fs_e, &m);
+  r = fs_sendrec(fs_e, &m);
+  
+  if(grant_ucred != 0) cpf_revoke(grant_ucred);
+  return r;
 }
 
 
@@ -291,12 +366,14 @@ static int req_getdents_actual(
   size_t size,
   off_t *new_pos,
   int direct,
-  int cpflag
+  int cpflag,
+  struct fproc *rfp
 )
 {
   int r;
+  vfs_ucred_t ucred;
   message m;
-  cp_grant_id_t grant_id;
+  cp_grant_id_t grant_id, grant_ucred;
   struct vmnt *vmp;
 
   vmp = find_vmnt(fs_e);
@@ -322,9 +399,13 @@ static int req_getdents_actual(
 	/* FS does not support 64-bit off_t and 32 bits is not enough */
 	return EINVAL;
   }
+  
+  req_write_user_credentials(fs_e, &m, rfp, &ucred, &grant_ucred);
 
+  /* Send/rec request */
   r = fs_sendrec(fs_e, &m);
   cpf_revoke(grant_id);
+  if(grant_ucred != 0) cpf_revoke(grant_ucred);
 
   if (r == OK) {
 	*new_pos = m.m_fs_vfs_getdents.seek_pos;
@@ -344,12 +425,14 @@ int req_getdents(
   vir_bytes buf,
   size_t size,
   off_t *new_pos,
-  int direct)
+  int direct,
+  struct fproc *rfp
+)
 {
 	int r;
 
 	r = req_getdents_actual(fs_e, inode_nr, pos, buf, size, new_pos,
-		direct, CPF_TRY);
+		direct, CPF_TRY, rfp);
 
 	if(r == EFAULT && !direct) {
 		if((r=vm_vfs_procctl_handlemem(who_e, buf, size, 1)) != OK) {
@@ -357,7 +440,7 @@ int req_getdents(
 		}
 
 		r = req_getdents_actual(fs_e, inode_nr, pos, buf, size,
-			new_pos, direct, 0);
+			new_pos, direct, 0, rfp);
 	}
 
 	return r;
@@ -386,11 +469,13 @@ int req_link(
   endpoint_t fs_e,
   ino_t link_parent,
   char *lastc,
-  ino_t linked_file
+  ino_t linked_file,
+  struct fproc *rfp
 )
 {
   int r;
-  cp_grant_id_t grant_id;
+  vfs_ucred_t ucred;
+  cp_grant_id_t grant_id, grant_ucred;
   const size_t len = strlen(lastc) + 1;
   message m;
 
@@ -405,9 +490,12 @@ int req_link(
   m.m_vfs_fs_link.grant = grant_id;
   m.m_vfs_fs_link.path_len = len;
 
+  req_write_user_credentials(fs_e, &m, rfp, &ucred, &grant_ucred);
+
   /* Send/rec request */
   r = fs_sendrec(fs_e, &m);
   cpf_revoke(grant_id);
+  if(grant_ucred != 0) cpf_revoke(grant_ucred);
 
   return(r);
 }
@@ -428,11 +516,14 @@ int req_lookup(
 )
 {
   message m;
-  vfs_ucred_t credentials;
+  vfs_ucred_t ucred;
   int r, flags;
   size_t len;
   struct vmnt *vmp;
-  cp_grant_id_t grant_id=0, grant_id2=0;
+  cp_grant_id_t grant_id=0, grant_ucred=0;
+
+  (void)uid;
+  (void)gid;
 
   vmp = find_vmnt(fs_e);
 
@@ -451,38 +542,14 @@ int req_lookup(
   m.m_vfs_fs_lookup.dir_ino 	= dir_ino;
   m.m_vfs_fs_lookup.root_ino 	= root_ino;
 
-  if(rfp->fp_ngroups > 0) { /* Is the process member of multiple groups? */
-	/* In that case the FS has to copy the uid/gid credentials */
-	int i;
-
-	/* Set credentials */
-	credentials.vu_uid = rfp->fp_effuid;
-	credentials.vu_gid = rfp->fp_effgid;
-	credentials.vu_ngroups = rfp->fp_ngroups;
-	for (i = 0; i < rfp->fp_ngroups; i++)
-		credentials.vu_sgroups[i] = rfp->fp_sgroups[i];
-
-	grant_id2 = cpf_grant_direct(fs_e, (vir_bytes) &credentials,
-				     sizeof(credentials), CPF_READ);
-	if(grant_id2 == -1)
-		panic("req_lookup: cpf_grant_direct failed");
-
-	m.m_vfs_fs_lookup.grant_ucred	= grant_id2;
-	m.m_vfs_fs_lookup.ucred_size	= sizeof(credentials);
-	flags		|= PATH_GET_UCRED;
-  } else {
-	/* When there's only one gid, we can send it directly */
-	m.m_vfs_fs_lookup.uid = uid;
-	m.m_vfs_fs_lookup.gid = gid;
-	flags		&= ~PATH_GET_UCRED;
-  }
+  req_write_user_credentials(fs_e, &m, rfp, &ucred, &grant_ucred);
 
   m.m_vfs_fs_lookup.flags = flags;
 
   /* Send/rec request */
   r = fs_sendrec(fs_e, &m);
   cpf_revoke(grant_id);
-  if(rfp->fp_ngroups > 0) cpf_revoke(grant_id2);
+  if(grant_ucred != 0) cpf_revoke(grant_ucred);
 
   /* Fill in response according to the return value */
   res->fs_e = m.m_source;
@@ -526,11 +593,13 @@ int req_mkdir(
   char *lastc,
   uid_t uid,
   gid_t gid,
-  mode_t dmode
+  mode_t dmode,
+  struct fproc *rfp
 )
 {
   int r;
-  cp_grant_id_t grant_id;
+  vfs_ucred_t ucred;
+  cp_grant_id_t grant_id, grant_ucred;
   size_t len;
   message m;
 
@@ -548,9 +617,12 @@ int req_mkdir(
   m.m_vfs_fs_mkdir.grant = grant_id;
   m.m_vfs_fs_mkdir.path_len = len;
 
+  req_write_user_credentials(fs_e, &m, rfp, &ucred, &grant_ucred);
+
   /* Send/rec request */
   r = fs_sendrec(fs_e, &m);
   cpf_revoke(grant_id);
+  if(grant_ucred != 0) cpf_revoke(grant_ucred);
 
   return(r);
 }
@@ -566,12 +638,14 @@ int req_mknod(
   uid_t uid,
   gid_t gid,
   mode_t dmode,
-  dev_t dev
+  dev_t dev,
+  struct fproc *rfp
 )
 {
   int r;
+  vfs_ucred_t ucred;
   size_t len;
-  cp_grant_id_t grant_id;
+  cp_grant_id_t grant_id, grant_ucred;
   message m;
 
   len = strlen(lastc) + 1;
@@ -589,9 +663,12 @@ int req_mknod(
   m.m_vfs_fs_mknod.grant = grant_id;
   m.m_vfs_fs_mknod.path_len = len;
 
+  req_write_user_credentials(fs_e, &m, rfp, &ucred, &grant_ucred);
+
   /* Send/rec request */
   r = fs_sendrec(fs_e, &m);
   cpf_revoke(grant_id);
+  if(grant_ucred != 0) cpf_revoke(grant_ucred);
 
   return(r);
 }
@@ -916,15 +993,17 @@ int req_peek(endpoint_t fs_e, ino_t inode_nr, off_t pos, unsigned int bytes)
 /*===========================================================================*
  *				req_rename	     			     *
  *===========================================================================*/
-int req_rename(fs_e, old_dir, old_name, new_dir, new_name)
+int req_rename(fs_e, old_dir, old_name, new_dir, new_name, rfp)
 endpoint_t fs_e;
 ino_t old_dir;
 char *old_name;
 ino_t new_dir;
 char *new_name;
+struct fproc *rfp;
 {
   int r;
-  cp_grant_id_t gid_old, gid_new;
+  vfs_ucred_t ucred;
+  cp_grant_id_t gid_old, gid_new, grant_ucred;
   size_t len_old, len_new;
   message m;
 
@@ -948,10 +1027,13 @@ char *new_name;
   m.m_vfs_fs_rename.grant_new = gid_new;
   m.m_vfs_fs_rename.len_new = len_new;
 
+  req_write_user_credentials(fs_e, &m, rfp, &ucred, &grant_ucred);
+
   /* Send/rec request */
   r = fs_sendrec(fs_e, &m);
   cpf_revoke(gid_old);
   cpf_revoke(gid_new);
+  if(grant_ucred != 0) cpf_revoke(grant_ucred);
 
   return(r);
 }
@@ -960,13 +1042,15 @@ char *new_name;
 /*===========================================================================*
  *				req_rmdir	      			     *
  *===========================================================================*/
-int req_rmdir(fs_e, inode_nr, lastc)
+int req_rmdir(fs_e, inode_nr, lastc, rfp)
 endpoint_t fs_e;
 ino_t inode_nr;
 char *lastc;
+struct fproc *rfp;
 {
   int r;
-  cp_grant_id_t grant_id;
+  vfs_ucred_t ucred;
+  cp_grant_id_t grant_id, grant_ucred;
   size_t len;
   message m;
 
@@ -981,9 +1065,12 @@ char *lastc;
   m.m_vfs_fs_unlink.grant = grant_id;
   m.m_vfs_fs_unlink.path_len = len;
 
+  req_write_user_credentials(fs_e, &m, rfp, &ucred, &grant_ucred);
+
   /* Send/rec request */
   r = fs_sendrec(fs_e, &m);
   cpf_revoke(grant_id);
+  if(grant_ucred != 0) cpf_revoke(grant_ucred);
 
   return(r);
 }
@@ -1001,12 +1088,14 @@ static int req_slink_actual(
   size_t path_length,
   uid_t uid,
   gid_t gid,
-  int cpflag
+  int cpflag,
+  struct fproc *rfp
 )
 {
   int r;
+  vfs_ucred_t ucred;
   size_t len;
-  cp_grant_id_t gid_name, gid_buf;
+  cp_grant_id_t gid_name, gid_buf, grant_ucred;
   message m;
 
   len = strlen(lastc) + 1;
@@ -1032,10 +1121,13 @@ static int req_slink_actual(
   m.m_vfs_fs_slink.grant_target = gid_buf;
   m.m_vfs_fs_slink.mem_size = path_length;
 
+  req_write_user_credentials(fs_e, &m, rfp, &ucred, &grant_ucred);
+
   /* Send/rec request */
   r = fs_sendrec(fs_e, &m);
   cpf_revoke(gid_name);
   cpf_revoke(gid_buf);
+  if(grant_ucred != 0) cpf_revoke(grant_ucred);
 
   return(r);
 }
@@ -1051,13 +1143,14 @@ int req_slink(
   vir_bytes path_addr,
   size_t path_length,
   uid_t uid,
-  gid_t gid
+  gid_t gid,
+  struct fproc *rfp
 )
 {
 	int r;
 
 	r = req_slink_actual(fs_e, inode_nr, lastc, proc_e, path_addr,
-		path_length, uid, gid, CPF_TRY);
+		path_length, uid, gid, CPF_TRY, rfp);
 
 	if(r == EFAULT) {
 		if((r=vm_vfs_procctl_handlemem(proc_e, (vir_bytes) path_addr,
@@ -1066,7 +1159,7 @@ int req_slink(
 		}
 
 		r = req_slink_actual(fs_e, inode_nr, lastc, proc_e, path_addr,
-			path_length, uid, gid, 0);
+			path_length, uid, gid, 0, rfp);
 	}
 
 	return r;
@@ -1143,12 +1236,14 @@ endpoint_t fs_e;
 /*===========================================================================*
  *				req_unlink	     			     *
  *===========================================================================*/
-int req_unlink(fs_e, inode_nr, lastc)
+int req_unlink(fs_e, inode_nr, lastc, rfp)
 endpoint_t fs_e;
 ino_t inode_nr;
 char *lastc;
+struct fproc *rfp;
 {
-  cp_grant_id_t grant_id;
+  vfs_ucred_t ucred;
+  cp_grant_id_t grant_id, grant_ucred;
   size_t len;
   int r;
   message m;
@@ -1164,9 +1259,12 @@ char *lastc;
   m.m_vfs_fs_unlink.grant = grant_id;
   m.m_vfs_fs_unlink.path_len = len;
 
+  req_write_user_credentials(fs_e, &m, rfp, &ucred, &grant_ucred);
+
   /* Send/rec request */
   r = fs_sendrec(fs_e, &m);
   cpf_revoke(grant_id);
+  if(grant_ucred != 0) cpf_revoke(grant_ucred);
 
   return(r);
 }
@@ -1192,9 +1290,12 @@ endpoint_t fs_e;
  *				req_utime	      			     *
  *===========================================================================*/
 int req_utime(endpoint_t fs_e, ino_t inode_nr, struct timespec * actimespec,
-	struct timespec * modtimespec)
+	struct timespec * modtimespec, struct fproc *rfp)
 {
   message m;
+  vfs_ucred_t ucred;
+  cp_grant_id_t grant_ucred;
+  int r;
 
   assert(actimespec != NULL);
   assert(modtimespec != NULL);
@@ -1207,6 +1308,11 @@ int req_utime(endpoint_t fs_e, ino_t inode_nr, struct timespec * actimespec,
   m.m_vfs_fs_utime.acnsec = actimespec->tv_nsec;
   m.m_vfs_fs_utime.modnsec = modtimespec->tv_nsec;
 
+  req_write_user_credentials(fs_e, &m, rfp, &ucred, &grant_ucred);
+
   /* Send/rec request */
-  return fs_sendrec(fs_e, &m);
+  r = fs_sendrec(fs_e, &m);
+  if(grant_ucred != 0) cpf_revoke(grant_ucred);
+
+  return(r);
 }

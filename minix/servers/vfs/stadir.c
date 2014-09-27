@@ -63,7 +63,7 @@ int do_chdir(void)
 	return(err_code);
 
   /* Try to open the directory */
-  lookup_init(&resolve, fullpath, PATH_NOFLAGS, &vmp, &vp);
+  lookup_init(&resolve, fullpath, PATH_CHECK_LOOKUP, &vmp, &vp);
   resolve.l_vmnt_lock = VMNT_READ;
   resolve.l_vnode_lock = VNODE_READ;
   if ((vp = eat_path(&resolve, fp)) == NULL) return(err_code);
@@ -97,7 +97,7 @@ int do_chroot(void)
 	return(err_code);
 
   /* Try to open the directory */
-  lookup_init(&resolve, fullpath, PATH_NOFLAGS, &vmp, &vp);
+  lookup_init(&resolve, fullpath, PATH_CHECK_LOOKUP, &vmp, &vp);
   resolve.l_vmnt_lock = VMNT_READ;
   resolve.l_vnode_lock = VNODE_READ;
   if ((vp = eat_path(&resolve, fp)) == NULL) return(err_code);
@@ -152,7 +152,7 @@ int do_stat(void)
   vname1_length = job_m_in.m_lc_vfs_stat.len;
   statbuf = job_m_in.m_lc_vfs_stat.buf;
 
-  lookup_init(&resolve, fullpath, PATH_NOFLAGS, &vmp, &vp);
+  lookup_init(&resolve, fullpath, 0/*PATH_CHECK_EXECUTE*/, &vmp, &vp);
   resolve.l_vmnt_lock = VMNT_READ;
   resolve.l_vnode_lock = VNODE_READ;
 

@@ -219,7 +219,7 @@ int pm_exec(vir_bytes path, size_t path_len, vir_bytes frame, size_t frame_len,
   fp->text_size = 0;
   fp->data_size = 0;
 
-  lookup_init(&resolve, fullpath, PATH_NOFLAGS, &execi.vmp, &execi.vp);
+  lookup_init(&resolve, fullpath, PATH_CHECK_EXECUTE, &execi.vmp, &execi.vp);
 
   resolve.l_vmnt_lock = VMNT_READ;
   resolve.l_vnode_lock = VNODE_READ;

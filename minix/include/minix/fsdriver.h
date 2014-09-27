@@ -5,6 +5,8 @@ struct stat;
 struct statvfs;
 struct timespec;
 
+#include "vfsif.h"
+
 /* Resulting node properties. */
 struct fsdriver_node {
 	ino_t fn_ino_nr;		/* inode number */
@@ -48,6 +50,9 @@ struct fsdriver_dentry {
 
 #define FSC_UNLINK	0		/* unlink call */
 #define FSC_RMDIR	1		/* rmdir call */
+
+/* Flags to alter behaviour of libfsdriver. */
+#define FSD_NO_POSIX_CHECK	0x1	/* do not check POSIX permissions */
 
 /* Function call table for file system services. */
 struct fsdriver {
@@ -108,7 +113,7 @@ struct fsdriver {
 void fsdriver_process(const struct fsdriver * __restrict fdp,
 	const message * __restrict m_ptr, int ipc_status, int asyn_reply);
 void fsdriver_terminate(void);
-void fsdriver_task(struct fsdriver *fdp);
+void fsdriver_task(struct fsdriver *fdp, int flags);
 
 int fsdriver_copyin(const struct fsdriver_data *data, size_t off, void *ptr,
 	size_t len);

@@ -104,10 +104,9 @@ int common_open(char path[PATH_MAX], int oflags, mode_t omode)
      &filp)) != OK)
 	return(r);
 
-  lookup_init(&resolve, path, PATH_NOFLAGS, &vmp, &vp);
-
   /* If O_CREATE is set, try to make the file. */
   if (oflags & O_CREAT) {
+	lookup_init(&resolve, path, PATH_NOFLAGS, &vmp, &vp);
         omode = I_REGULAR | (omode & ALLPERMS & fp->fp_umask);
 	vp = new_node(&resolve, oflags, omode);
 	r = err_code;
@@ -120,6 +119,8 @@ int common_open(char path[PATH_MAX], int oflags, mode_t omode)
 	else exist = !(oflags & O_EXCL);/* file exists, if the O_EXCL
 					   flag is set this is an error */
   } else {
+	lookup_init(&resolve, path, bits, &vmp, &vp);
+
 	/* Scan path name */
 	resolve.l_vmnt_lock = VMNT_READ;
 	resolve.l_vnode_lock = VNODE_OPCL;
@@ -151,7 +152,7 @@ int common_open(char path[PATH_MAX], int oflags, mode_t omode)
 				if ((r = forbidden(fp, vp, W_BIT)) != OK)
 					break;
 				upgrade_vnode_lock(vp);
-				truncate_vnode(vp, 0);
+				r = truncate_vnode(vp, 0);
 			}
 			break;
 		   case S_IFDIR:
@@ -314,6 +315,9 @@ static struct vnode *new_node(struct lookup *resolve, int oflags, mode_t bits)
   /* See if the path can be opened down to the last directory. */
   if ((dirp = last_dir(&findnode, fp)) == NULL) return(NULL);
 
+  findnode.l_flags = mode_map[oflags & O_ACCMODE];
+  if (oflags & O_EXCL) findnode.l_flags |= PATH_RET_SYMLINK;
+
   /* The final directory is accessible. Get final component of the path. */
   lookup_init(&findnode, findnode.l_path, findnode.l_flags, &vp_vmp, &vp);
   findnode.l_vmnt_lock = VMNT_WRITE;
@@ -352,7 +356,7 @@ static struct vnode *new_node(struct lookup *resolve, int oflags, mode_t bits)
 
 	if ((r = forbidden(fp, dirp, W_BIT|X_BIT)) != OK ||
 	    (r = req_create(dirp->v_fs_e, dirp->v_inode_nr,bits, fp->fp_effuid,
-			    fp->fp_effgid, path, &res)) != OK ) {
+			    fp->fp_effgid, path, &res, fp)) != OK ) {
 		/* Can't create inode either due to permissions or some other
 		 * problem. In case r is EEXIST, we might be dealing with a
 		 * dangling symlink.*/
@@ -519,7 +523,7 @@ int do_mknod(void)
   mode_bits = job_m_in.m_lc_vfs_mknod.mode;
   dev = job_m_in.m_lc_vfs_mknod.device;
 
-  lookup_init(&resolve, fullpath, PATH_NOFLAGS, &vmp, &vp);
+  lookup_init(&resolve, fullpath, PATH_CHECK_WRITE|PATH_CHECK_LOOKUP, &vmp, &vp);
   resolve.l_vmnt_lock = VMNT_WRITE;
   resolve.l_vnode_lock = VNODE_WRITE;
 
@@ -538,7 +542,7 @@ int do_mknod(void)
 	r = ENOTDIR;
   } else if ((r = forbidden(fp, vp, W_BIT|X_BIT)) == OK) {
 	r = req_mknod(vp->v_fs_e, vp->v_inode_nr, fullpath, fp->fp_effuid,
-		      fp->fp_effgid, bits, dev);
+		      fp->fp_effgid, bits, dev, fp);
   }
 
   unlock_vnode(vp);
@@ -565,7 +569,7 @@ int do_mkdir(void)
 	return(err_code);
   dirmode = job_m_in.m_lc_vfs_path.mode;
 
-  lookup_init(&resolve, fullpath, PATH_NOFLAGS, &vmp, &vp);
+  lookup_init(&resolve, fullpath, PATH_CHECK_WRITE|PATH_CHECK_LOOKUP, &vmp, &vp);
   resolve.l_vmnt_lock = VMNT_WRITE;
   resolve.l_vnode_lock = VNODE_WRITE;
 
@@ -577,7 +581,7 @@ int do_mkdir(void)
 	r = ENOTDIR;
   } else if ((r = forbidden(fp, vp, W_BIT|X_BIT)) == OK) {
 	r = req_mkdir(vp->v_fs_e, vp->v_inode_nr, fullpath, fp->fp_effuid,
-		      fp->fp_effgid, bits);
+		      fp->fp_effgid, bits, fp);
   }
 
   unlock_vnode(vp);

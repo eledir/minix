@@ -431,7 +431,7 @@ main(void)
 	pfs_startup();
 
 	/* The fsdriver library does the actual work here. */
-	fsdriver_task(&pfs_table);
+	fsdriver_task(&pfs_table, 0);
 
 	return EXIT_SUCCESS;
 }

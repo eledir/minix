@@ -78,7 +78,20 @@ extern int fsdriver_getname(endpoint_t endpt, cp_grant_id_t grant, size_t len,
 extern dev_t fsdriver_device;
 extern ino_t fsdriver_root;
 extern int fsdriver_mounted;
+extern int fsdriver_flags;
 extern int (*fsdriver_callvec[])(const struct fsdriver * __restrict,
 	const message * __restrict, message * __restrict);
+
+extern int fsdriver_posix_check_access(const struct fsdriver * __restrict fdp, 
+	ino_t ino_nr, const vfs_ucred_t *ucred,	mode_t access_desired);
+extern int fsdriver_posix_check_chown(const struct fsdriver * __restrict fdp, 
+	ino_t ino_nr, const vfs_ucred_t *ucred,	uid_t uid, gid_t gid);
+extern int fsdriver_posix_check_chmod(const struct fsdriver * __restrict fdp, 
+	ino_t ino_nr, const vfs_ucred_t *ucred);
+extern int fsdriver_posix_check_utime(const struct fsdriver * __restrict fdp,
+	ino_t ino_nr, const vfs_ucred_t *ucred);
+
+extern int fetch_user_credentials(vfs_ucred_t *ucred,
+	const message * __restrict m_in);
 
 #endif /* !_LIBFSDRIVER_FSDRIVER_H */

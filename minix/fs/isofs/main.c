@@ -61,7 +61,7 @@ int main(int argc, char *argv[])
 	env_setargs(argc, argv);
 	sef_local_startup();
 
-	fsdriver_task(&isofs_table);
+	fsdriver_task(&isofs_table, 0);
 
 	return 0;
 }

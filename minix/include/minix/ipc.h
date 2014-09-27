@@ -1647,25 +1647,40 @@ typedef struct {
 _ASSERT_MSG_SIZE(mess_vfs_fs_breadwrite);
 
 typedef struct {
+	size_t ucred_size;
+	cp_grant_id_t grant_ucred;
+	uid_t ucred_uid;
+	gid_t ucred_gid;
+
 	ino_t inode;
 
 	mode_t mode;
 
-	uint8_t data[44];
+	uint8_t data[28];
 } mess_vfs_fs_chmod;
 _ASSERT_MSG_SIZE(mess_vfs_fs_chmod);
 
 typedef struct {
+	size_t ucred_size;
+	cp_grant_id_t grant_ucred;
+	uid_t ucred_uid;
+	gid_t ucred_gid;
+
 	ino_t inode;
 
 	uid_t uid;
 	gid_t gid;
 
-	uint8_t data[40];
+	uint8_t data[24];
 } mess_vfs_fs_chown;
 _ASSERT_MSG_SIZE(mess_vfs_fs_chown);
 
 typedef struct {
+	size_t ucred_size;
+	cp_grant_id_t grant_ucred;
+	uid_t ucred_uid;
+	gid_t ucred_gid;
+
 	ino_t inode;
 
 	mode_t mode;
@@ -1674,7 +1689,7 @@ typedef struct {
 	cp_grant_id_t grant;
 	size_t path_len;
 
-	uint8_t data[28];
+	uint8_t data[12];
 } mess_vfs_fs_create;
 _ASSERT_MSG_SIZE(mess_vfs_fs_create);
 
@@ -1686,22 +1701,32 @@ typedef struct {
 _ASSERT_MSG_SIZE(mess_vfs_fs_flush);
 
 typedef struct {
+	size_t ucred_size;
+	cp_grant_id_t grant_ucred;
+	uid_t ucred_uid;
+	gid_t ucred_gid;
+
 	ino_t inode;
 	off_t trc_start;
 	off_t trc_end;
 
-	uint8_t data[32];
+	uint8_t data[16];
 } mess_vfs_fs_ftrunc;
 _ASSERT_MSG_SIZE(mess_vfs_fs_ftrunc);
 
 typedef struct {
+	size_t ucred_size;
+	cp_grant_id_t grant_ucred;
+	uid_t ucred_uid;
+	gid_t ucred_gid;
+
 	ino_t inode;
 	off_t seek_pos;
 
 	cp_grant_id_t grant;
 	size_t mem_size;
 
-	uint8_t data[32];
+	uint8_t data[16];
 } mess_vfs_fs_getdents;
 _ASSERT_MSG_SIZE(mess_vfs_fs_getdents);
 
@@ -1713,34 +1738,45 @@ typedef struct {
 _ASSERT_MSG_SIZE(mess_vfs_fs_inhibread);
 
 typedef struct {
+	size_t ucred_size;
+	cp_grant_id_t grant_ucred;
+	uid_t ucred_uid;
+	gid_t ucred_gid;
+
 	ino_t inode;
 	ino_t dir_ino;
 
 	cp_grant_id_t grant;
 	size_t path_len;
 
-	uint8_t data[32];
+	uint8_t data[16];
 } mess_vfs_fs_link;
 _ASSERT_MSG_SIZE(mess_vfs_fs_link);
 
 typedef struct {
+	size_t ucred_size;
+	cp_grant_id_t grant_ucred;
+	uid_t ucred_uid;
+	gid_t ucred_gid;
+
 	ino_t dir_ino;
 	ino_t root_ino;
 
 	uint32_t flags;
 	size_t path_len;
 	size_t path_size;
-	size_t ucred_size;
 	cp_grant_id_t grant_path;
-	cp_grant_id_t grant_ucred;
-	uid_t uid;
-	gid_t gid;
 
 	uint8_t data[8];
 } mess_vfs_fs_lookup;
 _ASSERT_MSG_SIZE(mess_vfs_fs_lookup);
 
 typedef struct {
+	size_t ucred_size;
+	cp_grant_id_t grant_ucred;
+	uid_t ucred_uid;
+	gid_t ucred_gid;
+
 	ino_t inode;
 
 	mode_t mode;
@@ -1749,11 +1785,16 @@ typedef struct {
 	cp_grant_id_t grant;
 	size_t path_len;
 
-	uint8_t data[28];
+	uint8_t data[12];
 } mess_vfs_fs_mkdir;
 _ASSERT_MSG_SIZE(mess_vfs_fs_mkdir);
 
 typedef struct {
+	size_t ucred_size;
+	cp_grant_id_t grant_ucred;
+	uid_t ucred_uid;
+	gid_t ucred_gid;
+
 	dev_t device;
 	ino_t inode;
 
@@ -1763,7 +1804,7 @@ typedef struct {
 	cp_grant_id_t grant;
 	size_t path_len;
 
-	uint8_t data[20];
+	uint8_t data[4];
 } mess_vfs_fs_mknod;
 _ASSERT_MSG_SIZE(mess_vfs_fs_mknod);
 
@@ -1836,6 +1877,11 @@ typedef struct {
 _ASSERT_MSG_SIZE(mess_vfs_fs_readwrite);
 
 typedef struct {
+	size_t ucred_size;
+	cp_grant_id_t grant_ucred;
+	uid_t ucred_uid;
+	gid_t ucred_gid;
+
 	ino_t dir_old;
 	ino_t dir_new;
 
@@ -1844,11 +1890,16 @@ typedef struct {
 	cp_grant_id_t grant_old;
 	cp_grant_id_t grant_new;
 
-	uint8_t data[24];
+	uint8_t data[8];
 } mess_vfs_fs_rename;
 _ASSERT_MSG_SIZE(mess_vfs_fs_rename);
 
 typedef struct {
+	size_t ucred_size;
+	cp_grant_id_t grant_ucred;
+	uid_t ucred_uid;
+	gid_t ucred_gid;
+
 	ino_t inode;
 
 	size_t path_len;
@@ -1858,7 +1909,7 @@ typedef struct {
 	uid_t uid;
 	gid_t gid;
 
-	uint8_t data[24];
+	uint8_t data[8];
 } mess_vfs_fs_slink;
 _ASSERT_MSG_SIZE(mess_vfs_fs_slink);
 
@@ -1879,16 +1930,26 @@ typedef struct {
 _ASSERT_MSG_SIZE(mess_vfs_fs_statvfs);
 
 typedef struct {
+	size_t ucred_size;
+	cp_grant_id_t grant_ucred;
+	uid_t ucred_uid;
+	gid_t ucred_gid;
+
 	ino_t inode;
 
 	cp_grant_id_t grant;
 	size_t path_len;
 
-	uint8_t data[40];
+	uint8_t data[24];
 } mess_vfs_fs_unlink;
 _ASSERT_MSG_SIZE(mess_vfs_fs_unlink);
 
 typedef struct {
+	size_t ucred_size;
+	cp_grant_id_t grant_ucred;
+	uid_t ucred_uid;
+	gid_t ucred_gid;
+
 	ino_t inode;
 	time_t actime;
 	time_t modtime;
@@ -1896,7 +1957,7 @@ typedef struct {
 	uint32_t acnsec;
 	uint32_t modnsec;
 
-	uint8_t data[24];
+	uint8_t data[8];
 } mess_vfs_fs_utime;
 _ASSERT_MSG_SIZE(mess_vfs_fs_utime);
 

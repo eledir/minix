@@ -143,23 +143,8 @@ fsdriver_lookup(const struct fsdriver * __restrict fdp,
 	    sizeof(path), FALSE /*not_empty*/)) != OK)
 		return r;
 
-	/* Fetch the caller's credentials. */
-	if (flags & PATH_GET_UCRED) {
-		if (m_in->m_vfs_fs_lookup.ucred_size != sizeof(ucred)) {
-			printf("fsdriver: bad credential structure\n");
-
-			return EINVAL;
-		}
-
-		if ((r = sys_safecopyfrom(m_in->m_source,
-		    m_in->m_vfs_fs_lookup.grant_ucred, 0, (vir_bytes)&ucred,
-		    (phys_bytes)m_in->m_vfs_fs_lookup.ucred_size)) != OK)
-			return r;
-	} else {
-		ucred.vu_uid = m_in->m_vfs_fs_lookup.uid;
-		ucred.vu_gid = m_in->m_vfs_fs_lookup.gid;
-		ucred.vu_ngroups = 0;
-	}
+	if ((r = fetch_user_credentials(&ucred, m_in)) != OK)
+		return r;
 
 	/* Start the actual lookup by referencing the starting inode. */
 	strlcpy(name, ".", sizeof(name)); /* allow a non-const argument */
@@ -195,8 +180,10 @@ fsdriver_lookup(const struct fsdriver * __restrict fdp,
 			 * current file is now being accessed as a directory.
 			 * Check type and permissions.
 			 */
-			if ((r = access_as_dir(&cur_node, &ucred)) != OK)
-				break;
+			if ((fsdriver_flags & FSD_NO_POSIX_CHECK) == 0 &&
+			    (r = access_as_dir(&cur_node, &ucred)) != OK) {
+				return r;
+			}
 		}
 
 		/* A single-dot component resolves to the current directory. */
@@ -318,6 +305,15 @@ fsdriver_lookup(const struct fsdriver * __restrict fdp,
 	 * If an error occurred, close the file and return error information.
 	 */
 	if (r == OK) {
+		//if(strcmp(path, "/events") != 0){
+		//	printf("PATH:%s\tMODE:%o\tFLAGS:%o\n", path, cur_node.fn_mode, flags);
+		if ((fsdriver_flags & FSD_NO_POSIX_CHECK) == 0 && (flags & 077)){
+			if ((r = fsdriver_posix_check_access(fdp, 
+			 cur_node.fn_ino_nr, &ucred, flags & 077)) != OK) {
+				fdp->fdr_putnode(cur_node.fn_ino_nr, 1);
+				return r;
+			 }
+		}
 		m_out->m_fs_vfs_lookup.inode = cur_node.fn_ino_nr;
 		m_out->m_fs_vfs_lookup.mode = cur_node.fn_mode;
 		m_out->m_fs_vfs_lookup.file_size = cur_node.fn_size;

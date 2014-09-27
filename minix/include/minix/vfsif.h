@@ -8,14 +8,19 @@
 #define REQ_RDONLY		001	/* FS is mounted read-only */
 #define REQ_ISROOT		002	/* FS is root file system */
 
-#define PATH_NOFLAGS		000
-#define PATH_RET_SYMLINK	010	/* Return a symlink object (i.e.
+#define PATH_NOFLAGS		0000
+
+#define PATH_CHECK_EXECUTE	0001
+#define PATH_CHECK_WRITE	0002
+#define PATH_CHECK_READ		0004
+#define PATH_CHECK_LOOKUP	0010
+
+#define PATH_RET_SYMLINK	0100	/* Return a symlink object (i.e.
 					 * do not continue with the contents
 					 * of the symlink if it is the last
 					 * component in a path). */
-#define PATH_GET_UCRED		020	/* Request provides a grant ID in m9_l1
-					 * and struct ucred size in m9_s4 (as
-					 * opposed to a REQ_UID). */
+#define PATH_CHECK_UCRED_ONLY	0200	/* Only check for permissions, do not
+					 * actually open. */
 
 #define RES_NOFLAGS		000
 #define RES_THREADED		001	/* FS supports multithreading */

@@ -55,5 +55,5 @@ void sffs_loop(void)
 /* The main function of this file server. Libfsdriver does the real work.
  */
 
-  fsdriver_task(&sffs_dtable);
+  fsdriver_task(&sffs_dtable, 0);
 }

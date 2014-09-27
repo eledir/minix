@@ -85,11 +85,13 @@ int do_utimens(void)
   }
 
   r = OK;
+#if 0
   /* Only the owner of a file or the super user can change timestamps. */
   if (vp->v_uid != fp->fp_effuid && fp->fp_effuid != SU_UID) r = EPERM;
   /* Need write permission (or super user) to 'touch' the file */
   if (r != OK && actim.tv_nsec == UTIME_NOW
               && modtim.tv_nsec == UTIME_NOW) r = forbidden(fp, vp, W_BIT);
+#endif
   if (read_only(vp) != OK) r = EROFS; /* Not even su can touch if R/O */
 
   if (r == OK) {
@@ -140,7 +142,7 @@ int do_utimens(void)
 
   if (r == OK)
 	/* Issue request */
-	r = req_utime(vp->v_fs_e, vp->v_inode_nr, &newactim, &newmodtim);
+	r = req_utime(vp->v_fs_e, vp->v_inode_nr, &newactim, &newmodtim, fp);
 
   if (kind == UTIMENS_STYLE) {
 	/* Close the temporary */

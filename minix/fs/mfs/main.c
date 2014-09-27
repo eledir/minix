@@ -20,7 +20,7 @@ int main(int argc, char *argv[])
   sef_local_startup();
 
   /* The fsdriver library does the actual work here. */
-  fsdriver_task(&mfs_table);
+  fsdriver_task(&mfs_table, 0);
 
   return(0);
 }

@@ -41,7 +41,7 @@ int main(int argc, char *argv[])
   ASSERT(le_CPU == 1);
 
   /* The fsdriver library does the actual work here. */
-  fsdriver_task(&ext2_table);
+  fsdriver_task(&ext2_table, 0);
 
   return 0;
 }

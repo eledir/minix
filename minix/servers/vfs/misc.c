@@ -206,7 +206,8 @@ int do_fcntl(void)
 	}
 	if (r != OK) break;
 
-	r = req_ftrunc(f->filp_vno->v_fs_e, f->filp_vno->v_inode_nr,start,end);
+	r = req_ftrunc(f->filp_vno->v_fs_e, f->filp_vno->v_inode_nr, start, end,
+		       fp);
 
 	if (r == OK && flock_arg.l_len == 0)
 		f->filp_vno->v_size = start;

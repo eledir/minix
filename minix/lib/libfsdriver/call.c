@@ -3,6 +3,40 @@
 #include <minix/ds.h>
 #include <sys/mman.h>
 
+int fetch_user_credentials(vfs_ucred_t *ucred, const message * __restrict m_in)
+{
+	int r = OK;
+
+	/*
+	 * Fetch the caller's credentials.
+	 * We do not bother to get the message corresponding to the call made,
+	 * as all user credentials fields are on the same bytes.
+	 */
+#if 1
+	if (m_in->m_vfs_fs_lookup.ucred_size == sizeof(vfs_ucred_t)) {
+		r = sys_safecopyfrom(m_in->m_source,
+		    m_in->m_vfs_fs_lookup.grant_ucred, 0, (vir_bytes)ucred,
+		    (phys_bytes)m_in->m_vfs_fs_lookup.ucred_size);
+	}
+	else if (m_in->m_vfs_fs_lookup.ucred_size == 0) {
+#endif
+		ucred->vu_uid = m_in->m_vfs_fs_lookup.ucred_uid;
+		ucred->vu_gid = m_in->m_vfs_fs_lookup.ucred_gid;
+		ucred->vu_ngroups = 0;
+#if 1
+	}
+	else {
+		printf("fsdriver: bad credential structure\n"
+		       "sizeof(vfs_ucred_t)=%d\n"
+		       "Got %d on %d\n", sizeof(vfs_ucred_t), 
+m_in->m_vfs_fs_lookup.ucred_size, m_in->m_type
+		);
+		r = EINVAL;
+	}
+#endif
+	return r;
+}
+
 /*
  * Process a READSUPER request from VFS.
  */
@@ -317,6 +351,7 @@ fsdriver_getdents(const struct fsdriver * __restrict fdp,
 	const message * __restrict m_in, message * __restrict m_out)
 {
 	struct fsdriver_data data;
+	vfs_ucred_t ucred;
 	ino_t ino_nr;
 	off_t pos;
 	size_t nbytes;
@@ -336,6 +371,16 @@ fsdriver_getdents(const struct fsdriver * __restrict fdp,
 	data.grant = m_in->m_vfs_fs_getdents.grant;
 	data.size = nbytes;
 
+	if ((r = fetch_user_credentials(&ucred, m_in)) != OK)
+		return r;
+
+	/* Check the caller's credentials. */
+	if ((fsdriver_flags & FSD_NO_POSIX_CHECK) == 0 &&
+	    (r = fsdriver_posix_check_access(fdp, ino_nr, &ucred, R_BIT))
+	     != OK) {
+		return r;
+	}
+	
 	r = fdp->fdr_getdents(ino_nr, &data, nbytes, &pos);
 
 	if (r >= 0) {
@@ -355,7 +400,9 @@ fsdriver_trunc(const struct fsdriver * __restrict fdp,
 	const message * __restrict m_in, message * __restrict __unused m_out)
 {
 	ino_t ino_nr;
+	vfs_ucred_t ucred;
 	off_t start_pos, end_pos;
+	int r;
 
 	ino_nr = m_in->m_vfs_fs_ftrunc.inode;
 	start_pos = m_in->m_vfs_fs_ftrunc.trc_start;
@@ -366,6 +413,16 @@ fsdriver_trunc(const struct fsdriver * __restrict fdp,
 
 	if (fdp->fdr_trunc == NULL)
 		return ENOSYS;
+
+	if ((r = fetch_user_credentials(&ucred, m_in)) != OK)
+		return r;
+
+	/* Check the caller's credentials. */
+	if ((fsdriver_flags & FSD_NO_POSIX_CHECK) == 0 &&
+	    (r = fsdriver_posix_check_access(fdp, ino_nr, &ucred, W_BIT))
+	     != OK) {
+		return r;
+	}
 
 	return fdp->fdr_trunc(ino_nr, start_pos, end_pos);
 }
@@ -395,6 +452,7 @@ fsdriver_create(const struct fsdriver * __restrict fdp,
 	const message * __restrict m_in, message * __restrict m_out)
 {
 	struct fsdriver_node node;
+	vfs_ucred_t ucred;
 	char name[NAME_MAX+1];
 	cp_grant_id_t grant;
 	size_t len;
@@ -421,6 +479,16 @@ fsdriver_create(const struct fsdriver * __restrict fdp,
 	if (!strcmp(name, ".") || !strcmp(name, ".."))
 		return EEXIST;
 
+	if ((r = fetch_user_credentials(&ucred, m_in)) != OK)
+		return r;
+
+	/* Check the caller's credentials. */
+	if ((fsdriver_flags & FSD_NO_POSIX_CHECK) == 0 &&
+	    (r = fsdriver_posix_check_access(fdp, dir_nr, &ucred, W_BIT|X_BIT))
+	     != OK) {
+		return r;
+	}
+	
 	if ((r = fdp->fdr_create(dir_nr, name, mode, uid, gid, &node)) == OK) {
 		m_out->m_fs_vfs_create.inode = node.fn_ino_nr;
 		m_out->m_fs_vfs_create.mode = node.fn_mode;
@@ -440,6 +508,7 @@ fsdriver_mkdir(const struct fsdriver * __restrict fdp,
 	const message * __restrict m_in, message * __restrict __unused m_out)
 {
 	char name[NAME_MAX+1];
+	vfs_ucred_t ucred;
 	cp_grant_id_t grant;
 	size_t path_len;
 	ino_t dir_nr;
@@ -465,6 +534,16 @@ fsdriver_mkdir(const struct fsdriver * __restrict fdp,
 	if (!strcmp(name, ".") || !strcmp(name, ".."))
 		return EEXIST;
 
+	if ((r = fetch_user_credentials(&ucred, m_in)) != OK)
+		return r;
+
+	/* Check the caller's credentials. */
+	if ((fsdriver_flags & FSD_NO_POSIX_CHECK) == 0 &&
+	    (r = fsdriver_posix_check_access(fdp, dir_nr, &ucred, W_BIT))
+	     != OK) {
+		return r;
+	}
+
 	return fdp->fdr_mkdir(dir_nr, name, mode, uid, gid);
 }
 
@@ -476,6 +555,7 @@ fsdriver_mknod(const struct fsdriver * __restrict fdp,
 	const message * __restrict m_in, message * __restrict __unused m_out)
 {
 	char name[NAME_MAX+1];
+	vfs_ucred_t ucred;
 	cp_grant_id_t grant;
 	size_t path_len;
 	ino_t dir_nr;
@@ -503,6 +583,16 @@ fsdriver_mknod(const struct fsdriver * __restrict fdp,
 	if (!strcmp(name, ".") || !strcmp(name, ".."))
 		return EEXIST;
 
+	if ((r = fetch_user_credentials(&ucred, m_in)) != OK)
+		return r;
+
+	/* Check the caller's credentials. */
+	if ((fsdriver_flags & FSD_NO_POSIX_CHECK) == 0 &&
+	    (r = fsdriver_posix_check_access(fdp, dir_nr, &ucred, W_BIT))
+	     != OK) {
+		return r;
+	}
+
 	return fdp->fdr_mknod(dir_nr, name, mode, uid, gid, dev);
 }
 
@@ -514,6 +604,7 @@ fsdriver_link(const struct fsdriver * __restrict fdp,
 	const message * __restrict m_in, message * __restrict __unused m_out)
 {
 	char name[NAME_MAX+1];
+	vfs_ucred_t ucred;
 	cp_grant_id_t grant;
 	size_t path_len;
 	ino_t dir_nr, ino_nr;
@@ -534,6 +625,16 @@ fsdriver_link(const struct fsdriver * __restrict fdp,
 	if (!strcmp(name, ".") || !strcmp(name, ".."))
 		return EEXIST;
 
+	if ((r = fetch_user_credentials(&ucred, m_in)) != OK)
+		return r;
+
+	/* Check the caller's credentials. */
+	if ((fsdriver_flags & FSD_NO_POSIX_CHECK) == 0 &&
+	    (r = fsdriver_posix_check_access(fdp, dir_nr, &ucred, W_BIT|X_BIT))
+	     != OK) {
+		return r;
+	}
+
 	return fdp->fdr_link(dir_nr, name, ino_nr);
 }
 
@@ -545,6 +646,7 @@ fsdriver_unlink(const struct fsdriver * __restrict fdp,
 	const message * __restrict m_in, message * __restrict __unused m_out)
 {
 	char name[NAME_MAX+1];
+	vfs_ucred_t ucred;
 	cp_grant_id_t grant;
 	size_t path_len;
 	ino_t dir_nr;
@@ -564,6 +666,16 @@ fsdriver_unlink(const struct fsdriver * __restrict fdp,
 	if (!strcmp(name, ".") || !strcmp(name, ".."))
 		return EPERM;
 
+	if ((r = fetch_user_credentials(&ucred, m_in)) != OK)
+		return r;
+
+	/* Check the caller's credentials. */
+	if ((fsdriver_flags & FSD_NO_POSIX_CHECK) == 0 &&
+	    (r = fsdriver_posix_check_access(fdp, dir_nr, &ucred, W_BIT))
+	     != OK) {
+		return r;
+	}
+
 	return fdp->fdr_unlink(dir_nr, name, FSC_UNLINK);
 }
 
@@ -575,6 +687,7 @@ fsdriver_rmdir(const struct fsdriver * __restrict fdp,
 	const message * __restrict m_in, message * __restrict __unused m_out)
 {
 	char name[NAME_MAX+1];
+	vfs_ucred_t ucred;
 	cp_grant_id_t grant;
 	size_t path_len;
 	ino_t dir_nr;
@@ -597,6 +710,16 @@ fsdriver_rmdir(const struct fsdriver * __restrict fdp,
 	if (!strcmp(name, ".."))
 		return ENOTEMPTY;
 
+	if ((r = fetch_user_credentials(&ucred, m_in)) != OK)
+		return r;
+
+	/* Check the caller's credentials. */
+	if ((fsdriver_flags & FSD_NO_POSIX_CHECK) == 0 &&
+	    (r = fsdriver_posix_check_access(fdp, dir_nr, &ucred, W_BIT))
+	     != OK) {
+		return r;
+	}
+
 	return fdp->fdr_rmdir(dir_nr, name, FSC_RMDIR);
 }
 
@@ -608,6 +731,7 @@ fsdriver_rename(const struct fsdriver * __restrict fdp,
 	const message * __restrict m_in, message * __restrict __unused m_out)
 {
 	char old_name[NAME_MAX+1], new_name[NAME_MAX+1];
+	vfs_ucred_t ucred;
 	cp_grant_id_t old_grant, new_grant;
 	size_t old_len, new_len;
 	ino_t old_dir_nr, new_dir_nr;
@@ -637,6 +761,22 @@ fsdriver_rename(const struct fsdriver * __restrict fdp,
 	if (!strcmp(new_name, ".") || !strcmp(new_name, ".."))
 		return EINVAL;
 
+	if ((r = fetch_user_credentials(&ucred, m_in)) != OK)
+		return r;
+
+	/* Check the caller's credentials. */
+	if ((fsdriver_flags & FSD_NO_POSIX_CHECK) == 0) {
+		if ((r = fsdriver_posix_check_access(fdp, old_dir_nr, &ucred,
+		     W_BIT|X_BIT)) != OK) {
+			return r;
+		}
+	
+		if ((r = fsdriver_posix_check_access(fdp, new_dir_nr, &ucred,
+		     W_BIT|X_BIT)) != OK) {
+			return r;
+		}
+	}
+
 	return fdp->fdr_rename(old_dir_nr, old_name, new_dir_nr, new_name);
 }
 
@@ -648,6 +788,7 @@ fsdriver_slink(const struct fsdriver * __restrict fdp,
 	const message * __restrict m_in, message * __restrict __unused m_out)
 {
 	struct fsdriver_data data;
+	vfs_ucred_t ucred;
 	char name[NAME_MAX+1];
 	cp_grant_id_t grant;
 	size_t path_len;
@@ -671,6 +812,16 @@ fsdriver_slink(const struct fsdriver * __restrict fdp,
 
 	if (!strcmp(name, ".") || !strcmp(name, ".."))
 		return EEXIST;
+
+	if ((r = fetch_user_credentials(&ucred, m_in)) != OK)
+		return r;
+
+	/* Check the caller's credentials. */
+	if ((fsdriver_flags & FSD_NO_POSIX_CHECK) == 0 &&
+	    (r = fsdriver_posix_check_access(fdp, dir_nr, &ucred, W_BIT))
+	     != OK) {
+		return r;
+	}
 
 	data.endpt = m_in->m_source;
 	data.grant = m_in->m_vfs_fs_slink.grant_target;
@@ -741,6 +892,7 @@ int
 fsdriver_chown(const struct fsdriver * __restrict fdp,
 	const message * __restrict m_in, message * __restrict m_out)
 {
+	vfs_ucred_t ucred;
 	ino_t ino_nr;
 	uid_t uid;
 	gid_t gid;
@@ -753,6 +905,16 @@ fsdriver_chown(const struct fsdriver * __restrict fdp,
 
 	if (fdp->fdr_chown == NULL)
 		return ENOSYS;
+
+	if ((r = fetch_user_credentials(&ucred, m_in)) != OK)
+		return r;
+
+	/* Check the caller's credentials. */
+	if ((fsdriver_flags & FSD_NO_POSIX_CHECK) == 0 &&
+	    (r = fsdriver_posix_check_chown(fdp, ino_nr, &ucred, uid, gid))
+	     != OK) {
+		return r;
+	}
 
 	if ((r = fdp->fdr_chown(ino_nr, uid, gid, &mode)) == OK)
 		m_out->m_fs_vfs_chown.mode = mode;
@@ -767,6 +929,7 @@ int
 fsdriver_chmod(const struct fsdriver * __restrict fdp,
 	const message * __restrict m_in, message * __restrict m_out)
 {
+	vfs_ucred_t ucred;
 	ino_t ino_nr;
 	mode_t mode;
 	int r;
@@ -776,6 +939,15 @@ fsdriver_chmod(const struct fsdriver * __restrict fdp,
 
 	if (fdp->fdr_chmod == NULL)
 		return ENOSYS;
+
+	if ((r = fetch_user_credentials(&ucred, m_in)) != OK)
+		return r;
+
+	/* Check the caller's credentials. */
+	if ((fsdriver_flags & FSD_NO_POSIX_CHECK) == 0 &&
+	    (r = fsdriver_posix_check_chmod(fdp, ino_nr, &ucred)) != OK) {
+		return r;
+	}
 
 	if ((r = fdp->fdr_chmod(ino_nr, &mode)) == OK)
 		m_out->m_fs_vfs_chmod.mode = mode;
@@ -790,8 +962,10 @@ int
 fsdriver_utime(const struct fsdriver * __restrict fdp,
 	const message * __restrict m_in, message * __restrict __unused m_out)
 {
+	vfs_ucred_t ucred;
 	ino_t ino_nr;
 	struct timespec atime, mtime;
+	int r;
 
 	ino_nr = m_in->m_vfs_fs_utime.inode;
 	atime.tv_sec = m_in->m_vfs_fs_utime.actime;
@@ -801,6 +975,16 @@ fsdriver_utime(const struct fsdriver * __restrict fdp,
 
 	if (fdp->fdr_utime == NULL)
 		return ENOSYS;
+
+	if ((r = fetch_user_credentials(&ucred, m_in)) != OK)
+		return r;
+
+	/* Check the caller's credentials. */
+	if ((fsdriver_flags & FSD_NO_POSIX_CHECK) == 0 &&
+	    (r = fsdriver_posix_check_utime(fdp, ino_nr, &ucred))
+	     != OK) {
+		return r;
+	}
 
 	return fdp->fdr_utime(ino_nr, &atime, &mtime);
 }

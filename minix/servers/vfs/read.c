@@ -289,7 +289,7 @@ int do_getdents(void)
   if (r == OK) {
 	r = req_getdents(rfilp->filp_vno->v_fs_e, rfilp->filp_vno->v_inode_nr,
 			 rfilp->filp_pos, scratch(fp).io.io_buffer,
-			 scratch(fp).io.io_nbytes, &new_pos, 0);
+			 scratch(fp).io.io_nbytes, &new_pos, 0, fp);
 
 	if (r > 0) rfilp->filp_pos = new_pos;
   }

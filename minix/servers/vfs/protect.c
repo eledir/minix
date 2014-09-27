@@ -75,7 +75,7 @@ int do_chmod(void)
 	if (fp->fp_effuid != SU_UID && vp->v_gid != fp->fp_effgid)
 		new_mode &= ~I_SET_GID_BIT;
 
-	r = req_chmod(vp->v_fs_e, vp->v_inode_nr, new_mode, &result_mode);
+	r = req_chmod(vp->v_fs_e, vp->v_inode_nr, new_mode, &result_mode, fp);
 	if (r == OK)
 		vp->v_mode = result_mode;
   }
@@ -158,7 +158,7 @@ int do_chown(void)
 	if (new_uid > UID_MAX || new_gid > GID_MAX)
 		r = EINVAL;
 	else if ((r = req_chown(vp->v_fs_e, vp->v_inode_nr, new_uid, new_gid,
-				&new_mode)) == OK) {
+				&new_mode, fp)) == OK) {
 		vp->v_uid = new_uid;
 		vp->v_gid = new_gid;
 		vp->v_mode = new_mode;
@@ -209,7 +209,7 @@ int do_access(void)
 
   access = job_m_in.m_lc_vfs_path.mode;
 
-  lookup_init(&resolve, fullpath, PATH_NOFLAGS, &vmp, &vp);
+  lookup_init(&resolve, fullpath, access & 07, &vmp, &vp);
   resolve.l_vmnt_lock = VMNT_READ;
   resolve.l_vnode_lock = VNODE_READ;
 
@@ -242,43 +242,10 @@ int forbidden(struct fproc *rfp, struct vnode *vp, mode_t access_desired)
  * caller's uid in the 'fproc' table.  If access is allowed, OK is returned
  * if it is forbidden, EACCES is returned.
  */
+  int r = OK;
 
-  register mode_t bits, perm_bits;
-  uid_t uid;
-  gid_t gid;
-  int r, shift;
+  (void)rfp;
 
-  if (vp->v_uid == (uid_t) -1 || vp->v_gid == (gid_t) -1) return(EACCES);
-
-  /* Isolate the relevant rwx bits from the mode. */
-  bits = vp->v_mode;
-  uid = (job_call_nr == VFS_ACCESS ? rfp->fp_realuid : rfp->fp_effuid);
-  gid = (job_call_nr == VFS_ACCESS ? rfp->fp_realgid : rfp->fp_effgid);
-
-  if (uid == SU_UID) {
-	/* Grant read and write permission.  Grant search permission for
-	 * directories.  Grant execute permission (for non-directories) if
-	 * and only if one of the 'X' bits is set.
-	 */
-	if ( S_ISDIR(bits) || bits & ((X_BIT << 6) | (X_BIT << 3) | X_BIT))
-		perm_bits = R_BIT | W_BIT | X_BIT;
-	else
-		perm_bits = R_BIT | W_BIT;
-  } else {
-	if (uid == vp->v_uid) shift = 6;		/* owner */
-	else if (gid == vp->v_gid) shift = 3;		/* group */
-	else if (in_group(fp, vp->v_gid) == OK) shift = 3; /* suppl. groups */
-	else shift = 0;					/* other */
-	perm_bits = (bits >> shift) & (R_BIT | W_BIT | X_BIT);
-  }
-
-  /* If access desired is not a subset of what is allowed, it is refused. */
-  r = OK;
-  if ((perm_bits | access_desired) != perm_bits) r = EACCES;
-
-  /* Check to see if someone is trying to write on a file system that is
-   * mounted read-only.
-   */
   if (r == OK)
 	if (access_desired & W_BIT)
 		r = read_only(vp);
