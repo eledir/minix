@@ -1,14 +1,14 @@
 #ifndef __BOARD_H__
 #define __BOARD_H__
 #include <string.h>
-/* 
+/*
   Utility functions to access/parse the board_id defined in the machine
   struct in include/minix/type.h.
 
-   Identifier for the board 
+   Identifier for the board
      [31:28] Architecture.  (MINIX_BOARD_ARCH)
-     [27:24] Architecture variant (MINIX_BOARD_ARCH_VARIANT) VERSION e.g. ARMV7 
-     [23:16] Vendor/Soc (EG TI )  (MINIX_BOARD_VENDOR) 
+     [27:24] Architecture variant (MINIX_BOARD_ARCH_VARIANT) VERSION e.g. ARMV7
+     [23:16] Vendor/Soc (EG TI )  (MINIX_BOARD_VENDOR)
      [15:8]  Board      (EG Beagle bone , beagle board ) (MINIX_BOARD)
      [7:0]   Board variant (EG BealgeBone white v.s. BeagleBone black ) (MINIX_BOARD_VARIANT)
 */
@@ -67,6 +67,7 @@
 
 #define MINIX_BOARD_VENDOR_INTEL MINIX_MK_BOARD_VENDOR(1<<0)
 #define MINIX_BOARD_VENDOR_TI MINIX_MK_BOARD_VENDOR(1<<1)
+#define MINIX_BOARD_VENDOR_RPI_FOUNDATION MINIX_MK_BOARD_VENDOR(1<<2)
 
 #define MINIX_BOARD_GENERIC MINIX_MK_BOARD(1<<0)
 /* BeagleBoard XM */
@@ -74,12 +75,19 @@
 /* BeagleBone (Black and* white) */
 #define MINIX_BOARD_BB MINIX_MK_BOARD(1<<2)
 
+/* Raspberry Pi 1 */
+#define MINIX_BOARD_RPI MINIX_MK_BOARD(1<<1)
+
 /* Only  one  of a kind */
 #define MINIX_BOARD_VARIANT_GENERIC MINIX_MK_BOARD_VARIANT(1<<0)
 /* BeagleBone White */
 #define MINIX_BOARD_VARIANT_BBW MINIX_MK_BOARD_VARIANT(1<<1)
 /* BeagleBone Black */
 #define MINIX_BOARD_VARIANT_BBB MINIX_MK_BOARD_VARIANT(1<<2)
+
+
+/* Raspberry Pi 1 Model B*/
+#define MINIX_BOARD_VARIANT_RPI_B MINIX_MK_BOARD_VARIANT(1<<1)
 
 #define BOARD_ID_INTEL \
 	( MINIX_BOARD_ARCH_X86 \
@@ -113,6 +121,15 @@
 	| MINIX_BOARD_VARIANT_BBB\
 	)
 
+#define BOARD_ID_RPI_B \
+	( MINIX_BOARD_ARCH_ARM \
+	| MINIX_BOARD_ARCH_VARIANT_ARM_ARMV6 \
+	| MINIX_BOARD_VENDOR_RPI_FOUNDATION \
+	| MINIX_BOARD_RPI \
+	| MINIX_BOARD_VARIANT_RPI_B\
+	)
+
+
 #define BOARD_IS_BBXM(v) \
 		( (BOARD_ID_BBXM & ~MINIX_BOARD_VARIANT_MASK) == (v & ~MINIX_BOARD_VARIANT_MASK))
 /* Either one of the known BeagleBones */
@@ -120,6 +137,9 @@
 		( (BOARD_ID_BBW & ~MINIX_BOARD_VARIANT_MASK) == (v & ~MINIX_BOARD_VARIANT_MASK))
 #define BOARD_IS_BBW(v)  ( v == BOARD_ID_BBW)
 #define BOARD_IS_BBB(v)  ( v == BOARD_ID_BBB)
+
+#define BOARD_IS_RPI(v) \
+		( (BOARD_ID_RPI_B & ~MINIX_BOARD_VARIANT_MASK) == (v & ~MINIX_BOARD_VARIANT_MASK))
 
 #define BOARD_FILTER_BBXM_VALUE (BOARD_ID_BBXM)
 #define BOARD_FILTER_BBXM_MASK  \
@@ -148,6 +168,7 @@ static struct shortname2id shortname2id[] = {
 	{.name = "BBXM",.id = BOARD_ID_BBXM},
 	{.name = "A335BONE",.id = BOARD_ID_BBW},
 	{.name = "A335BNLT",.id = BOARD_ID_BBB},
+	{.name = "rpi_b",.id = BOARD_ID_RPI_B},
 };
 
 struct board_id2name
@@ -162,6 +183,7 @@ static struct board_id2name board_id2name[] = {
 	{.id = BOARD_ID_BBXM,.name = "ARM-ARMV7-TI-BBXM-GENERIC"},
 	{.id = BOARD_ID_BBW,.name = "ARM-ARMV7-TI-BB-WHITE"},
 	{.id = BOARD_ID_BBB,.name = "ARM-ARMV7-TI-BB-BLACK"},
+	{.id = BOARD_ID_RPI_B,.name = "ARM-ARMV6-RPI_FOUNDATION-RPI_B"},
 };
 
 struct board_arch2arch
@@ -201,7 +223,7 @@ get_board_id_by_name(const char *name)
 	return 0;
 }
 
-/* convert a board id to a board name to use later 
+/* convert a board id to a board name to use later
    returns NULL if no board was found that match that id */
 static const char *
 get_board_name(unsigned int id)
@@ -215,7 +237,7 @@ get_board_name(unsigned int id)
 	return NULL;
 }
 
-/* convert a board id to a board name to use later 
+/* convert a board id to a board name to use later
    returns NULL if no board was found that match that id */
 static const char *
 get_board_arch_name(unsigned int id)

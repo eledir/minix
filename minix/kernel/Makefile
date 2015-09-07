@@ -4,9 +4,10 @@
 PROG=		kernel
 BINDIR=		/usr/sbin
 MAN=
-
+CFLAGS+= -march=armv6j -mtune=arm1176jzf-s -g -O0
+ASFLAGS+= -march=armv6j -mtune=arm1176jzf-s
 .if ${MACHINE_ARCH} == "earm" && ${MKLLVM:Uno} == "yes"
-# BJG - problems with optimisation of the kernel by llvm 
+# BJG - problems with optimisation of the kernel by llvm
 DBG=-O0
 .endif
 
@@ -15,7 +16,7 @@ DBG=-O0
 SRCS+=	clock.c cpulocals.c interrupt.c main.c proc.c system.c \
 	table.c utility.c usermapped_data.c
 
-LDADD+=	-ltimers -lsys -lexec 
+LDADD+=	-ltimers -lsys -lexec
 
 LINKERSCRIPT= ${.CURDIR}/arch/${MACHINE_ARCH}/kernel.lds
 
@@ -26,7 +27,7 @@ LDFLAGS+= -T ${LINKERSCRIPT}
 LDFLAGS+= -nostdlib -L${DESTDIR}/usr/lib
 CFLAGS += -fno-stack-protector
 
-CPPFLAGS+= -D__kernel__ 
+CPPFLAGS+= -D__kernel__
 
 # kernel headers are always called through kernel/*.h
 CPPFLAGS+= -I${NETBSDSRCDIR}/minix
@@ -35,7 +36,7 @@ CPPFLAGS+= -I${NETBSDSRCDIR}/minix
 # time for generated headers, during cross compilation
 CPPFLAGS+= -I${.OBJDIR}/..
 
-# Machine-dependent headers, order is important! 
+# Machine-dependent headers, order is important!
 CPPFLAGS+= -I${.CURDIR}/arch/${MACHINE_ARCH}
 CPPFLAGS+= -I${.CURDIR}/arch/${MACHINE_ARCH}/include
 CPPFLAGS+= -I${.CURDIR}/arch/${MACHINE_ARCH}/bsp/include

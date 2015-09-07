@@ -6,7 +6,7 @@ HERE=${.CURDIR}/arch/${MACHINE_ARCH}
 
 # objects we want unpaged from -lc
 MINLIB_OBJS_UNPAGED= get_bp.o
-get_bp.o:	${NETBSDSRCDIR}/minix/lib/libc/arch/arm/get_bp.S 
+get_bp.o:	${NETBSDSRCDIR}/minix/lib/libc/arch/arm/get_bp.S
 
 # objects we want unpaged from -lsys
 SYS_OBJS_UNPAGED=assert.o stacktrace.o
@@ -17,7 +17,7 @@ stacktrace.o:	${NETBSDSRCDIR}/minix/lib/libsys/stacktrace.c
 MINC_OBJS_UNPAGED= atoi.o \
 	printf.o subr_prf.o \
 	strcmp.o strcpy.o strlen.o strncmp.o \
-	memcpy.o memmove.o memset.o 
+	memcpy.o memmove.o memset.o
 MINC_OBJS_UNPAGED+= divmodsi4.o divsi3.o udivsi3.o umodsi3.o \
 	umoddi3.o udivmoddi4.o aeabi_idivmod.o aeabi_uidivmod.o \
 	udivmodsi4.o aeabi_uldivmod.o
@@ -51,7 +51,7 @@ CPPFLAGS.subr_prf.c+= -Dputchar=kputc
 # Activate optional support, may be deactivated.
 CPPFLAGS.subr_prf.c+= -DLIBSA_PRINTF_LONGLONG_SUPPORT -DLIBSA_PRINTF_WIDTH_SUPPORT
 
-.include "bsp/ti/Makefile.inc"
+.include "bsp/rpi/Makefile.inc"
 
 # some object files we give a symbol prefix (or namespace) of __k_unpaged_
 # that must live in their own unique namespace.
@@ -87,7 +87,7 @@ procoffsets.h: ${PROCOFFSETSCF} kernel.h proc.h stackframe.h archtypes.h
 	${_MKTARGET_CREATE}
 	${TOOL_CAT} ${HERE}/${PROCOFFSETSCF} | \
 	  ${TOOL_GENASSYM} -- ${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} >$@.tmp && \
-	  mv -f $@.tmp $@ 
+	  mv -f $@.tmp $@
 
 sconst.h: procoffsets.h
 apic_asm.o head.o klib.o mpx.o: sconst.h

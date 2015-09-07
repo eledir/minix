@@ -18,6 +18,7 @@
 #include "arch_proto.h"
 #include "bsp_reset.h"
 #include "bsp_serial.h"
+#include "cpufunc.h"
 #include "kernel/proc.h"
 #include "kernel/debug.h"
 #include "direct_utils.h"
@@ -26,9 +27,9 @@
 void
 halt_cpu(void)
 {
-	asm volatile("dsb");
+	dsb();
 	asm volatile("cpsie i");
-	asm volatile("wfi");
+	wfi();
 	asm volatile("cpsid i");
 }
 

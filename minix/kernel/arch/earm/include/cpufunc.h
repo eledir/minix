@@ -18,6 +18,8 @@ static inline void check_int(unsigned int state, int line)
 }
 #endif
 
+#if 0
+
 /* Data memory barrier */
 static inline void dmb(void)
 {
@@ -36,12 +38,43 @@ static inline void isb(void)
 	asm volatile("isb" : : : "memory");
 }
 
+static inline void wfi(void)
+{
+	asm volatile("wfi" : : : );
+}
+
+#else
+
+/* Data memory barrier */
+static inline void dmb(void)
+{
+	asm volatile("mcr p15, 0, ip, c7, c6, 0" : : : "memory");
+}
+
+/* Data synchronization barrier */
+static inline void dsb(void)
+{
+	dmb();
+}
+
+/* Instruction synchronization barrier */
+static inline void isb(void)
+{
+	asm volatile("mcr p15, 0, ip, c7, c5, 0" : : : "memory");
+}
+
+static inline void wfi(void)
+{
+	asm volatile("mcr p15, 0, ip, c7, c0, 4" : : : );
+}
+
+#endif
+
 static inline void barrier(void)
 {
 	dsb();
 	isb();
 }
-
 
 /* Read CLIDR, Cache Level ID Register */
 static inline u32_t read_clidr(){
@@ -138,12 +171,12 @@ static inline void dcache_maint(int type){
 				u32_t val = ( way << (32 - way_bits) ) |  (set << l) | (cache_level << 1 );
 				if (type == 1) {
 					/* DCCISW, Data Cache Clean and Invalidate by Set/Way */
-					asm volatile("mcr p15, 0, %[set], c7, c14, 2 @ DCCISW" 
+					asm volatile("mcr p15, 0, %[set], c7, c14, 2 @ DCCISW"
 							: : [set] "r" (val));
 				} else if (type ==2 ){
 					/* DCISW, Data Cache Invalidate by Set/Way */
-					asm volatile("mcr p15, 0, %[set], c7, c6, 2" 
-							: : [set] "r" (val)); 
+					asm volatile("mcr p15, 0, %[set], c7, c6, 2"
+							: : [set] "r" (val));
 				}
 			}
 		}
@@ -223,7 +256,7 @@ static inline void write_ttbr0(u32_t bar)
 {
 	barrier();
 	/* In our setup TTBR contains the base address *and* the flags
-	   but other pieces of the kernel code expect ttbr to be the 
+	   but other pieces of the kernel code expect ttbr to be the
 	   base address of the l1 page table. We therefore add the
 	   flags here and remove them in the read_ttbr0 */
 	u32_t v  =  (bar  & ARM_TTBR_ADDR_MASK ) | ARM_TTBR_FLAGS_CACHED;

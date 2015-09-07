@@ -49,7 +49,7 @@ extern char _kern_unpaged_end;
  *
  * The following function combines a few things together
  * that can well be done using standard libc like strlen/strstr
- * and such but these are not available in pre_init stage. 
+ * and such but these are not available in pre_init stage.
  *
  * The function expects content to be in the form of space separated
  * key value pairs.
@@ -87,7 +87,7 @@ int find_value(char * content,char * key,char *value,int value_max_len){
 			match_len++;
 			keyp++;
 			continue;
-		} 
+		}
 		/* The current key does not match the value , reset */
 		match_len =0;
 		keyp=key;
@@ -96,7 +96,7 @@ int find_value(char * content,char * key,char *value,int value_max_len){
 	if (match_len == key_len) {
 		printf("key found at %d %s\n", match_len, &content[match_len]);
 		value_len = 0;
-		/* copy the content to the value char iter already points to the first 
+		/* copy the content to the value char iter already points to the first
 		   char value */
 		while(*iter != '\0' && *iter != ' ' && value_len  + 1< value_max_len) {
 			*value++ = *iter++;
@@ -127,7 +127,7 @@ static int mb_set_param(char *bigbuf,char *name,char *value, kinfo_t *cbi)
 		if (strncmp(p, name, namelen) == 0 && p[namelen] == '=') {
 			q = p;
 			/* let q point to the end of the entry */
-			while (*q) q++; 
+			while (*q) q++;
 			/* now copy the remained of the buffer */
 			for (q++; q < bufend; q++, p++)
 				*p = *q;
@@ -138,19 +138,19 @@ static int mb_set_param(char *bigbuf,char *name,char *value, kinfo_t *cbi)
 		while (*p++);
 		p++;
 	}
-	
+
 
 	/* find the first empty spot */
 	for (p = bigbuf; p < bufend && (*p || *(p + 1)); p++);
 
 	/* unless we are the first entry step over the delimiter */
 	if (p > bigbuf) p++;
-	
+
 	/* Make sure there's enough space for the new parameter */
 	if (p + namelen + valuelen + 3 > bufend) {
 		return -1;
 	}
-	
+
 	strcpy(p, name);
 	p[namelen] = '=';
 	strcpy(p + namelen + 1, value);
@@ -265,7 +265,7 @@ void get_parameters(kinfo_t *cbi, char *bootargs)
 				value[value_i++] = *p++ ;
 			}
 			value[value_i] = 0;
-			
+
 			mb_set_param(cbi->param_buf, var, value, cbi);
 		}
 	}
@@ -273,11 +273,11 @@ void get_parameters(kinfo_t *cbi, char *bootargs)
 	/* let higher levels know what we are booting on */
 	mb_set_param(cbi->param_buf, ARCHVARNAME, (char *)get_board_arch_name(machine.board_id), cbi);
 	mb_set_param(cbi->param_buf, BOARDVARNAME,(char *)get_board_name(machine.board_id) , cbi);
-	
+
 
 	/* round user stack down to leave a gap to catch kernel
 	 * stack overflow; and to distinguish kernel and user addresses
-	 * at a glance (0xf.. vs 0xe..) 
+	 * at a glance (0xf.. vs 0xe..)
 	 */
 	cbi->user_sp &= 0xF0000000;
 	cbi->user_end = cbi->user_sp;
@@ -295,14 +295,14 @@ void get_parameters(kinfo_t *cbi, char *bootargs)
 	assert(mbi->mi_mods_count > 0);
 	memcpy(&cbi->module_list, (void *) mbi->mods_addr,
 		mbi->mi_mods_count * sizeof(multiboot_module_t));
-	
+
 	memset(cbi->memmap, 0, sizeof(cbi->memmap));
 	/* mem_map has a variable layout */
 	if(mbi->flags & MULTIBOOT_INFO_MEM_MAP) {
 		cbi->mmap_size = 0;
 	        for (mmap = (multiboot_memory_map_t *) mbi->mmap_addr;
        	     (unsigned long) mmap < mbi->mmap_addr + mbi->mmap_length;
-       	       mmap = (multiboot_memory_map_t *) 
+       	       mmap = (multiboot_memory_map_t *)
 		      	((unsigned long) mmap + mmap->size + sizeof(mmap->size))) {
 			if(mmap->type != MULTIBOOT_MEMORY_AVAILABLE) continue;
 			add_memmap(cbi, mmap->mm_base_addr, mmap->mm_length);
@@ -340,7 +340,7 @@ void get_parameters(kinfo_t *cbi, char *bootargs)
 	}
 }
 
-/* 
+/*
  * During low level init many things are not supposed to work
  * serial being one of them. We therefore can't rely on the
  * serial to debug. POORMANS_FAILURE_NOTIFICATION can be used
@@ -348,7 +348,8 @@ void get_parameters(kinfo_t *cbi, char *bootargs)
  * the bootloader's debugging methods that will hopefully show some
  * information like the currnet PC at on the serial.
  */
-#define POORMANS_FAILURE_NOTIFICATION  asm volatile("svc #00\n")
+#define POORMANS_FAILURE_NOTIFICATION while(1);
+/*#define POORMANS_FAILURE_NOTIFICATION  asm volatile("svc #00\n")*/
 
 /* use the passed cmdline argument to determine the machine id */
 void set_machine_id(char *cmdline)
@@ -356,13 +357,14 @@ void set_machine_id(char *cmdline)
 
 	char boardname[20];
 	memset(boardname,'\0',20);
+
 	if (find_value(cmdline,"board_name=",boardname,20)){
 		/* we expect the bootloader to pass a board_name as argument
 		 * this however did not happen and given we still are in early
 		 * boot we can't use the serial. We therefore generate an interrupt
 		 * and hope the bootloader will do something nice with it */
 		POORMANS_FAILURE_NOTIFICATION;
-	}  
+	}
 	machine.board_id = get_board_id_by_short_name(boardname);
 
 	if (machine.board_id ==0){
@@ -371,42 +373,59 @@ void set_machine_id(char *cmdline)
 	}
 }
 
+void poot(char a)
+{
+	*((volatile int volatile*)0x20201000) = a;
+	for (volatile int x = 0; x < 10000000; x++);
+}
+
 kinfo_t *pre_init(int argc, char **argv)
 {
 	char *bootargs;
 	/* This is the main "c" entry point into the kernel. It gets called
 	   from head.S */
-	   
+
+	poot('a');
 	/* Clear BSS */
 	memset(&_edata, 0, (u32_t)&_end - (u32_t)&_edata);
         memset(&_kern_unpaged_edata, 0, (u32_t)&_kern_unpaged_end - (u32_t)&_kern_unpaged_edata);
 
+	poot('b');
 	/* we get called in a c like fashion where the first arg
          * is the program name (load address) and the rest are
 	 * arguments. by convention the second argument is the
 	 *  command line */
-	if (argc != 2) {
+	/*if (argc != 2) {
 		POORMANS_FAILURE_NOTIFICATION;
-	}
+	}*/
 
-	bootargs = argv[1];
+	bootargs = "board_name=rpi_b";//argv[1];
 	set_machine_id(bootargs);
+	poot('c');
 	bsp_ser_init();
+	poot('d');
 	/* Get our own copy boot params pointed to by ebx.
 	 * Here we find out whether we should do serial output.
 	 */
 	get_parameters(&kinfo, bootargs);
-
+	poot('e');
 	/* Make and load a pagetable that will map the kernel
 	 * to where it should be; but first a 1:1 mapping so
 	 * this code stays where it should be.
 	 */
+	poot('f');
 	dcache_clean(); /* clean the caches */
+	poot('g');
 	pg_clear();
+	poot('h');
 	pg_identity(&kinfo);
+	poot('i');
 	kinfo.freepde_start = pg_mapkernel();
+	poot('j');
 	pg_load();
+	poot('k');
 	vm_enable_paging();
+	poot('l');
 
 	/* Done, return boot info so it can be passed to kmain(). */
 	return &kinfo;
