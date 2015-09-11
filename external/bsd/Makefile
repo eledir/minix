@@ -6,6 +6,10 @@ SUBDIR= byacc fetch file flex less \
 	libarchive libevent mdocml \
 	tmux
 
+.if defined(__MINIX)
+SUBDIR+= pkg_install
+.endif
+
 .if (${MKATF} != "no")
 SUBDIR+= atf
 .endif
