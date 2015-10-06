@@ -1,0 +1,7 @@
+DEFAULT menu.c32
+TIMEOUT 100
+
+LABEL x86
+  MENU LABEL Minix3
+  KERNEL mboot.c32
+  APPEND kernel bootramdisk=1 --- mod01_ds --- mod02_rs --- mod03_pm --- mod04_sched --- mod05_vfs --- mod06_memory --- mod07_tty --- mod08_mfs --- mod09_vm --- mod10_pfs --- mod11_init
