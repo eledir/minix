@@ -152,8 +152,8 @@
 ./usr/share/xsl/atf/tests-results.xsl                   minix-tests     atf,!kyua
 ./usr/tests                                             minix-tests
 ./usr/tests/atf/atf-c++/detail/auto_array_test          minix-tests     atf
-./usr/tests/crypto/Atffile                              minix-tests     crypto
-./usr/tests/crypto/Kyuafile                             minix-tests     crypto
+./usr/tests/crypto/Atffile                              minix-tests     crypto,atf
+./usr/tests/crypto/Kyuafile                             minix-tests     crypto,kyua
 ./usr/tests/lib                                         minix-tests     bitcode
 ./usr/tests/lib/csu                                     minix-tests     bitcode
 ./usr/tests/lib/csu/bc                                  minix-tests     bitcode

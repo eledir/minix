@@ -24,13 +24,13 @@ fi
 : ${TOOLCHAIN_TRIPLET=arm-elf32-minix-}
 : ${BUILDSH=build.sh}
 
-: ${SETS="minix-base minix-comp minix-games minix-man minix-tests tests"}
+: ${SETS="minix-base minix-comp minix-games minix-man minix-tests"}
 : ${IMG=minix_arm_sd.img}
 
 # ARM definitions:
-: ${BUILDVARS=-V MKGCCCMDS=yes -V MKLLVM=no}
+#: ${BUILDVARS=-V MKGCCCMDS=yes -V MKLLVM=no}
 # These BUILDVARS are for building with LLVM:
-#: ${BUILDVARS=-V MKLIBCXX=no -V MKKYUA=no -V MKATF=no -V MKLLVMCMDS=no}
+: ${BUILDVARS=-V MKLIBCXX=no -V MKKYUA=no -V MKATF=no -V MKLLVMCMDS=no -V NOCLANGERROR=yes}
 : ${FAT_SIZE=$((    10*(2**20) / 512))} # This is in sectors
 
 # Beagleboard-xm

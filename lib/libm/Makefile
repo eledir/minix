@@ -167,7 +167,7 @@ COMMON_SRCS+= b_exp.c b_log.c b_tgamma.c \
 	s_asinh.c s_asinhf.c s_atan.c s_atanf.c s_cbrt.c s_cbrtf.c s_cbrtl.c \
 	s_ceil.c s_ceilf.c s_ceill.c s_copysign.c s_copysignf.c s_copysignl.c \
 	s_cos.c s_cosf.c s_erf.c \
-	s_erff.c s_exp2.c s_exp2f.c s_expm1.c s_expm1f.c s_fabsf.c s_fabsl.c \
+	s_erff.c s_exp2.c s_exp2f.c s_expm1.c s_expm1f.c s_fabs.c s_fabsf.c s_fabsl.c \
 	s_finite.c s_finitef.c \
 	s_floor.c s_floorf.c s_floorl.c s_frexpf.c \
 	s_ilogb.c s_ilogbf.c s_ilogbl.c \
