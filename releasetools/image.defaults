@@ -23,3 +23,14 @@
 
 # where the kernel & boot modules will be
 MODDIR=${DESTDIR}/boot/minix/.temp
+
+#
+# 3rd-party repositories
+#
+: ${UBOOT_URL=https://github.com/boricj/u-boot.git}
+: ${UBOOT_BRANCH=minix}
+: ${UBOOT_REVISION=b23695a84169f42fe6643cd548af49819722eabe}
+
+: ${RPI_FIRMWARE_URL=https://github.com/boricj/rpi-firmware.git}
+: ${RPI_FIRMWARE_BRANCH=master}
+: ${RPI_FIRMWARE_REVISION=ccbca2eadd09dc550968839f227ecd0323cdbf22}
