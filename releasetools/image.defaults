@@ -29,7 +29,7 @@ MODDIR=${DESTDIR}/boot/minix/.temp
 #
 : ${UBOOT_URL=https://github.com/boricj/u-boot.git}
 : ${UBOOT_BRANCH=minix}
-: ${UBOOT_REVISION=b23695a84169f42fe6643cd548af49819722eabe}
+: ${UBOOT_REVISION=93494ec4adda0b1150495b0426476410988bb5a8}
 
 : ${RPI_FIRMWARE_URL=https://github.com/boricj/rpi-firmware.git}
 : ${RPI_FIRMWARE_BRANCH=master}
