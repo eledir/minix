@@ -87,6 +87,7 @@ cp releasetools/u-boot/build/rpi/u-boot.bin ${ROOT_DIR}/u-boot-rpi.bin
 cp releasetools/u-boot/build/rpi_2/u-boot.bin ${ROOT_DIR}/u-boot-rpi2.bin
 cp releasetools/u-boot/build/rpi_3/u-boot.bin ${ROOT_DIR}/u-boot-rpi3.bin
 
+# Write GPU config file
 cat <<EOF >${ROOT_DIR}/config.txt
 [pi3]
 kernel=u-boot-rpi3.bin
@@ -98,6 +99,13 @@ kernel=u-boot-rpi2.bin
 [pi1]
 kernel=u-boot-rpi.bin
 EOF
+
+# Write U-Boot boot script
+cat <<EOF >${ROOT_DIR}/boot.cmd
+fatload mmc 0 0x00200000 kernel.bin
+go 0x00200000 "board_name=RPI_3_B"
+EOF
+mkimage -C none -A arm -T script -d ${ROOT_DIR}/boot.cmd ${ROOT_DIR}/boot.scr
 
 ${CROSS_TOOLS}/nbmakefs -t msdos -s $FAT_SIZE -O $FAT_START -o "F=32,c=1" ${IMG} ${ROOT_DIR} >/dev/null
 
