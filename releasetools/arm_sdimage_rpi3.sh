@@ -77,6 +77,11 @@ echo "Writing disk image..."
 #
 echo " * BOOT"
 rm -rf ${ROOT_DIR}/*
+for i in ${MODDIR}/*
+do
+	cp $i ${ROOT_DIR}/$(basename $i).elf
+done
+${CROSS_PREFIX}objcopy ${OBJ}/minix/kernel/kernel -O binary ${ROOT_DIR}/kernel.bin
 cp -r releasetools/rpi-firmware/* ${ROOT_DIR}
 cp releasetools/u-boot/build/rpi/u-boot.bin ${ROOT_DIR}/u-boot-rpi.bin
 cp releasetools/u-boot/build/rpi_2/u-boot.bin ${ROOT_DIR}/u-boot-rpi2.bin

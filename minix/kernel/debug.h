@@ -30,7 +30,7 @@
 #define DEBUG_SANITYCHECKS		0
 
 /* Verbose messages. */
-#define DEBUG_TRACE			0
+#define DEBUG_TRACE			1
 
 /* DEBUG_RACE makes every process preemptible, schedules
  * every process on the same priority queue, and randomizes

@@ -1,0 +1,4 @@
+#ifndef _RPI_TIMER_REGISTERS_H
+#define _RPI_TIMER_REGISTERS_H
+
+#endif /* _RPI_TIMER_REGISTERS_H */

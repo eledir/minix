@@ -179,10 +179,10 @@ int overlaps(multiboot_module_t *mod, int n, int cmp_mod)
 
 /* XXX: hard-coded stuff for modules */
 #define MB_MODS_NR NR_BOOT_MODULES
-#define MB_MODS_BASE  0x82000000
+#define MB_MODS_BASE  0x02000000
 #define MB_MODS_ALIGN 0x00800000 /* 8 MB */
-#define MB_MMAP_START 0x80000000
-#define MB_MMAP_SIZE  0x10000000 /* 256 MB */
+#define MB_MMAP_START 0x00000000
+#define MB_MMAP_SIZE  0x30000000 /* 256 MB */
 
 multiboot_module_t mb_modlist[MB_MODS_NR];
 multiboot_memory_map_t mb_memmap;
@@ -371,15 +371,30 @@ void set_machine_id(char *cmdline)
 	}
 }
 
+void print_memmap();
+
 kinfo_t *pre_init(int argc, char **argv)
 {
 	char *bootargs;
 	/* This is the main "c" entry point into the kernel. It gets called
 	   from head.S */
-	   
+
 	/* Clear BSS */
 	memset(&_edata, 0, (u32_t)&_end - (u32_t)&_edata);
         memset(&_kern_unpaged_edata, 0, (u32_t)&_kern_unpaged_end - (u32_t)&_kern_unpaged_edata);
+
+#define RPI_GPFSEL1   0x3f200004
+#define RPI_GPPUD     0x3f200094
+#define RPI_GPPUDCLK0 0x3f200098
+	/* Set up GPIO for PL011 UART */
+	*(volatile int*)RPI_GPFSEL1 = (*(volatile int*)(RPI_GPFSEL1) & ~0x3f000) | 0x24000;
+	*(volatile int*)RPI_GPPUD = 0;
+	for (int delay = 150; delay; delay--);
+	*(volatile int*)RPI_GPPUD = 0;
+	for (int delay = 150; delay; delay--);
+	*(volatile int*)RPI_GPPUDCLK0=  (0x3 << 15);
+	for (int delay = 150; delay; delay--);
+	*(volatile int*)RPI_GPPUDCLK0 = 0;
 
 	/* we get called in a c like fashion where the first arg
          * is the program name (load address) and the rest are
@@ -388,25 +403,40 @@ kinfo_t *pre_init(int argc, char **argv)
 	if (argc != 2) {
 		POORMANS_FAILURE_NOTIFICATION;
 	}
-
 	bootargs = argv[1];
 	set_machine_id(bootargs);
 	bsp_ser_init();
+	bsp_ser_putc('1');
 	/* Get our own copy boot params pointed to by ebx.
 	 * Here we find out whether we should do serial output.
 	 */
 	get_parameters(&kinfo, bootargs);
-
+	bsp_ser_putc('2');
 	/* Make and load a pagetable that will map the kernel
 	 * to where it should be; but first a 1:1 mapping so
 	 * this code stays where it should be.
 	 */
 	dcache_clean(); /* clean the caches */
+	bsp_ser_putc('3');
 	pg_clear();
+	bsp_ser_putc('4');
 	pg_identity(&kinfo);
+	bsp_ser_putc('5');
 	kinfo.freepde_start = pg_mapkernel();
+	bsp_ser_putc('6');
 	pg_load();
+	bsp_ser_putc('7');
 	vm_enable_paging();
+	bsp_ser_putc('8');
+
+#if 0
+	unsigned *addr = (unsigned*)0xf042df00;
+	for (int p = 0; p < 128; p++) {
+		printf("\n\r");
+		printf("0x%08lx: ", addr);
+		for (int k = 0; k < 4; k++) printf("%08lx ", *addr++);
+	}
+#endif
 
 	/* Done, return boot info so it can be passed to kmain(). */
 	return &kinfo;

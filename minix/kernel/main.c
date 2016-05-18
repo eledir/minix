@@ -124,14 +124,14 @@ void kmain(kinfo_t *local_cbi)
   register int i, j;
   static int bss_test;
 
+  *(volatile int*)0x3f201000 = '9';
   /* bss sanity check */
   assert(bss_test == 0);
   bss_test = 1;
-
+  verboseboot = VERBOSEBOOT_MAX;
   /* save a global copy of the boot parameters */
   memcpy(&kinfo, local_cbi, sizeof(kinfo));
   memcpy(&kmess, kinfo.kmess, sizeof(kmess));
-
    /* We have done this exercise in pre_init so we expect this code
       to simply work! */
    machine.board_id = get_board_id_by_name(env_get(BOARDVARNAME));
