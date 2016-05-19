@@ -30,30 +30,31 @@ MINIX:
 
 .text
 multiboot_init:
-	ldr	sp, =load_stack_start	/* make usable stack */
-	mov	fp, #0
-	push	{r0-r3}
-
-	/* Taken straight from NetBSD's a9_mpsubr.S */
+#if 0
 	/* Leave HYP mode and move into supervisor mode with IRQs/FIQs disabled. */
-	mrs	r0, cpsr
-	and	r0, r0, #(PSR_MODE)	/* Mode is in the low 5 bits of CPSR */
-	teq	r0, #(PSR_HYP32_MODE)	/* Hyp Mode? */
-	bne	svcmode
+	mrs	r4, cpsr
+	and	r4, r4, #(PSR_MODE)	/* Mode is in the low 5 bits of CPSR */
+	teq	r4, #(PSR_HYP32_MODE)	/* Hyp Mode? */
+	bne	1f
 
 	/* Ensure that IRQ, and FIQ will be disabled after eret */
-	mrs	r0, cpsr
-	bic	r0, r0, #(PSR_MODE)
-	orr	r0, r0, #(PSR_SVC32_MODE)
-	orr	r0, r0, #(I32_bit | F32_bit)
-	msr	spsr_hyp, r0
+	mrs	r4, cpsr
+	bic	r4, r4, #(PSR_MODE)
+	orr	r4, r4, #(PSR_SVC32_MODE)
+	orr	r4, r4, #(I32_bit | F32_bit)
+	msr	spsr_cxsf, r4
 	/* Exit hypervisor mode */
-	adr	lr, svcmode
+	adr	lr, 2f
 	msr	elr_hyp, lr
 	/*eret*/
 
-svcmode:
-	pop	{r0-r3}
+1:
+	cpsid	if, #PSR_SVC32_MODE		// SVC32 with no interrupts
+
+2:
+#endif
+	ldr	sp, =load_stack_start	/* make usable stack */
+	mov	fp, #0
 	bl	_C_LABEL(pre_init)
 
 	/* Kernel is mapped high now and ready to go, with

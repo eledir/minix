@@ -26,7 +26,7 @@ LDFLAGS+= -T ${LINKERSCRIPT}
 LDFLAGS+= -nostdlib -L${DESTDIR}/usr/lib
 CFLAGS += -fno-stack-protector
 
-CPPFLAGS+= -D__kernel__ 
+CPPFLAGS+= -D__kernel__ -g
 
 # kernel headers are always called through kernel/*.h
 CPPFLAGS+= -I${NETBSDSRCDIR}/minix

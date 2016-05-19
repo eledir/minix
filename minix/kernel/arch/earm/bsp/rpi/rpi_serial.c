@@ -41,7 +41,7 @@ static kern_phys_map serial_phys_map;
 void
 bsp_ser_init()
 {
-	if (BOARD_IS_RPI_3_B(machine.board_id)) {
+	if (BOARD_IS_RPI_2_B(machine.board_id) || BOARD_IS_RPI_3_B(machine.board_id)) {
 		pl011_serial.base = RPI3_PL011_DEBUG_UART_BASE;
 	}
 
@@ -59,7 +59,6 @@ bsp_ser_init()
 		mmio_write(pl011_serial.base + PL011_IBRD, 26);
 		mmio_write(pl011_serial.base + PL011_FBRD, 3);
 	}
-
 	else if (BOARD_IS_RPI_2_B(machine.board_id)) {
 		/* UARTCLK=48MHz */
 		mmio_write(pl011_serial.base + PL011_IBRD, 1);
@@ -78,7 +77,7 @@ bsp_ser_putc(char c)
 
 	/* Wait until FIFO's not full */
 	for (i = 0; i < 100000; i++) {
-		if (mmio_read(pl011_serial.base + PL011_FR) & PL011_FR_TXFF) {
+		if ((mmio_read(pl011_serial.base + PL011_FR) & PL011_FR_TXFF) == 0) {
 			break;
 		}
 	}
