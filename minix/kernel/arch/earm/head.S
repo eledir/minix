@@ -2,6 +2,7 @@
 
 /* sections */
 
+#include <arm/armreg.h>
 #include <machine/vm.h>
 #include "kernel/kernel.h"
 #include <minix/config.h>
@@ -31,6 +32,28 @@ MINIX:
 multiboot_init:
 	ldr	sp, =load_stack_start	/* make usable stack */
 	mov	fp, #0
+	push	{r0-r3}
+
+	/* Taken straight from NetBSD's a9_mpsubr.S */
+	/* Leave HYP mode and move into supervisor mode with IRQs/FIQs disabled. */
+	mrs	r0, cpsr
+	and	r0, r0, #(PSR_MODE)	/* Mode is in the low 5 bits of CPSR */
+	teq	r0, #(PSR_HYP32_MODE)	/* Hyp Mode? */
+	bne	svcmode
+
+	/* Ensure that IRQ, and FIQ will be disabled after eret */
+	mrs	r0, cpsr
+	bic	r0, r0, #(PSR_MODE)
+	orr	r0, r0, #(PSR_SVC32_MODE)
+	orr	r0, r0, #(I32_bit | F32_bit)
+	msr	spsr_hyp, r0
+	/* Exit hypervisor mode */
+	adr	lr, svcmode
+	msr	elr_hyp, lr
+	/*eret*/
+
+svcmode:
+	pop	{r0-r3}
 	bl	_C_LABEL(pre_init)
 
 	/* Kernel is mapped high now and ready to go, with

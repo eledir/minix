@@ -65,9 +65,6 @@ bsp_ser_init()
 #endif
 	mmio_write(pl011_serial.base + PL011_LCRH, 0x70);
 	mmio_write(pl011_serial.base + PL011_CR, 0x181);
-
-	for (const char *c = "bsp_ser_init()\n"; *c; c++)
-		bsp_ser_putc(*c);
 }
 
 void
@@ -76,7 +73,7 @@ bsp_ser_putc(char c)
 	int i;
 	assert(pl011_serial.base);
 
-	/* Wait until FIFO's empty */
+	/* Wait until FIFO's not full */
 	for (i = 0; i < 100000; i++) {
 		if (mmio_read(pl011_serial.base + PL011_FR) & PL011_FR_TXFF) {
 			break;
@@ -85,12 +82,11 @@ bsp_ser_putc(char c)
 
 	/* Write character */
 	mmio_write(pl011_serial.base + PL011_DR, c);
-#if 0
+
 	/* And wait again until FIFO's empty to prevent TTY from overwriting */
 	for (i = 0; i < 100000; i++) {
 		if (mmio_read(pl011_serial.base + PL011_FR) & PL011_FR_TXFE) {
 			break;
 		}
 	}
-#endif
 }
