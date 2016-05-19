@@ -103,7 +103,13 @@ EOF
 # Write U-Boot boot script
 cat <<EOF >${ROOT_DIR}/boot.cmd
 fatload mmc 0 0x00200000 kernel.bin
-go 0x00200000 "board_name=RPI_3_B"
+if test "\${board_name}" = "2 Model B"; then
+    go 0x00200000 "board_name=RPI_2_B"
+fi
+if test "\${board_name}" = "3 Model B"; then
+    go 0x00200000 "board_name=RPI_3_B"
+fi
+echo "Unknown board name \${board_name}"
 EOF
 mkimage -C none -A arm -T script -d ${ROOT_DIR}/boot.cmd ${ROOT_DIR}/boot.scr
 

@@ -381,19 +381,6 @@ kinfo_t *pre_init(int argc, char **argv)
 	memset(&_edata, 0, (u32_t)&_end - (u32_t)&_edata);
         memset(&_kern_unpaged_edata, 0, (u32_t)&_kern_unpaged_end - (u32_t)&_kern_unpaged_edata);
 
-#define RPI_GPFSEL1   0x3f200004
-#define RPI_GPPUD     0x3f200094
-#define RPI_GPPUDCLK0 0x3f200098
-	/* Set up GPIO for PL011 UART */
-	*(volatile int*)RPI_GPFSEL1 = (*(volatile int*)(RPI_GPFSEL1) & ~0x3f000) | 0x24000;
-	*(volatile int*)RPI_GPPUD = 0;
-	for (int delay = 150; delay; delay--);
-	*(volatile int*)RPI_GPPUD = 0;
-	for (int delay = 150; delay; delay--);
-	*(volatile int*)RPI_GPPUDCLK0=  (0x3 << 15);
-	for (int delay = 150; delay; delay--);
-	*(volatile int*)RPI_GPPUDCLK0 = 0;
-
 	/* we get called in a c like fashion where the first arg
          * is the program name (load address) and the rest are
 	 * arguments. by convention the second argument is the
@@ -403,6 +390,22 @@ kinfo_t *pre_init(int argc, char **argv)
 	}
 	bootargs = argv[1];
 	set_machine_id(bootargs);
+
+	//if (BOARD_IS_RPI_3_B(machine.board_id)) {
+	/* Set up GPIO for PL011 UART */
+#define RPI_GPFSEL1   0x3f200004
+#define RPI_GPPUD     0x3f200094
+#define RPI_GPPUDCLK0 0x3f200098
+		*(volatile int*)RPI_GPFSEL1 = (*(volatile int*)(RPI_GPFSEL1) & ~0x3f000) | 0x24000;
+		*(volatile int*)RPI_GPPUD = 0;
+		for (int delay = 150; delay; delay--);
+		*(volatile int*)RPI_GPPUD = 0;
+		for (int delay = 150; delay; delay--);
+		*(volatile int*)RPI_GPPUDCLK0=  (0x3 << 15);
+		for (int delay = 150; delay; delay--);
+		*(volatile int*)RPI_GPPUDCLK0 = 0;
+	//}
+
 	bsp_ser_init();
 	bsp_ser_putc('1');
 	/* Get our own copy boot params pointed to by ebx.

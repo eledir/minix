@@ -83,8 +83,10 @@
 #define MINIX_BOARD_VARIANT_BBW MINIX_MK_BOARD_VARIANT(1<<1)
 /* BeagleBone Black */
 #define MINIX_BOARD_VARIANT_BBB MINIX_MK_BOARD_VARIANT(1<<2)
-/* Rasberry Pi 3 B */
-#define MINIX_BOARD_VARIANT_RPI_3_B MINIX_MK_BOARD_VARIANT(1<<3)
+
+/* Rasberry Pi */
+#define MINIX_BOARD_VARIANT_RPI_2_B MINIX_MK_BOARD_VARIANT(1<<1)
+#define MINIX_BOARD_VARIANT_RPI_3_B MINIX_MK_BOARD_VARIANT(1<<2)
 
 #define BOARD_ID_INTEL \
 	( MINIX_BOARD_ARCH_X86 \
@@ -118,6 +120,14 @@
 	| MINIX_BOARD_VARIANT_BBB\
 	)
 
+#define BOARD_ID_RPI_2_B \
+	( MINIX_BOARD_ARCH_ARM \
+	| MINIX_BOARD_ARCH_VARIANT_ARM_ARMV7 \
+	| MINIX_BOARD_VENDOR_RPI \
+	| MINIX_BOARD_RPI \
+	| MINIX_BOARD_VARIANT_RPI_2_B \
+	)
+
 #define BOARD_ID_RPI_3_B \
 	( MINIX_BOARD_ARCH_ARM \
 	| MINIX_BOARD_ARCH_VARIANT_ARM_ARMV7 \
@@ -134,6 +144,7 @@
 #define BOARD_IS_BBW(v)  ( v == BOARD_ID_BBW)
 #define BOARD_IS_BBB(v)  ( v == BOARD_ID_BBB)
 
+#define BOARD_IS_RPI_2_B(v)  ( v == BOARD_ID_RPI_2_B)
 #define BOARD_IS_RPI_3_B(v)  ( v == BOARD_ID_RPI_3_B)
 
 #define BOARD_FILTER_BBXM_VALUE (BOARD_ID_BBXM)
@@ -163,6 +174,7 @@ static struct shortname2id shortname2id[] = {
 	{.name = "BBXM",.id = BOARD_ID_BBXM},
 	{.name = "A335BONE",.id = BOARD_ID_BBW},
 	{.name = "A335BNLT",.id = BOARD_ID_BBB},
+	{.name = "RPI_2_B",.id = BOARD_ID_RPI_2_B},
 	{.name = "RPI_3_B",.id = BOARD_ID_RPI_3_B},
 };
 
@@ -178,6 +190,7 @@ static struct board_id2name board_id2name[] = {
 	{.id = BOARD_ID_BBXM,.name = "ARM-ARMV7-TI-BBXM-GENERIC"},
 	{.id = BOARD_ID_BBW,.name = "ARM-ARMV7-TI-BB-WHITE"},
 	{.id = BOARD_ID_BBB,.name = "ARM-ARMV7-TI-BB-BLACK"},
+	{.id = BOARD_ID_RPI_2_B,.name = "ARM-ARMV7-RPI-RPI_2_B"},
 	{.id = BOARD_ID_RPI_3_B,.name = "ARM-ARMV7-RPI-RPI_3_B"},
 };
 

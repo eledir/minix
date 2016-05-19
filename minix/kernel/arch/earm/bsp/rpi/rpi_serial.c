@@ -54,17 +54,20 @@ bsp_ser_init()
 	assert(pl011_serial.base);
 
 	/* Set UART to 115200 bauds */
-#if 1
-	/* UARTCLK=3MHz */
-	mmio_write(pl011_serial.base + PL011_IBRD, 26);
-	mmio_write(pl011_serial.base + PL011_FBRD, 3);
-#else
-	/* UARTCLK=48MHz */
-	mmio_write(pl011_serial.base + PL011_IBRD, 1);
-	mmio_write(pl011_serial.base + PL011_FBRD, 40);
-#endif
+	if (BOARD_IS_RPI_3_B(machine.board_id)) {
+		/* UARTCLK=3MHz */
+		mmio_write(pl011_serial.base + PL011_IBRD, 26);
+		mmio_write(pl011_serial.base + PL011_FBRD, 3);
+	}
+
+	else if (BOARD_IS_RPI_2_B(machine.board_id)) {
+		/* UARTCLK=48MHz */
+		mmio_write(pl011_serial.base + PL011_IBRD, 1);
+		mmio_write(pl011_serial.base + PL011_FBRD, 40);
+	}
+
 	mmio_write(pl011_serial.base + PL011_LCRH, 0x70);
-	mmio_write(pl011_serial.base + PL011_CR, 0x181);
+	mmio_write(pl011_serial.base + PL011_CR, 0x101);
 }
 
 void
