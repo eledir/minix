@@ -376,7 +376,7 @@ kinfo_t *pre_init(int argc, char **argv)
 	char *bootargs;
 	/* This is the main "c" entry point into the kernel. It gets called
 	   from head.S */
-*(volatile int*)0x3f201000 = '1';
+
 	/* Clear BSS */
 	memset(&_edata, 0, (u32_t)&_end - (u32_t)&_edata);
         memset(&_kern_unpaged_edata, 0, (u32_t)&_kern_unpaged_end - (u32_t)&_kern_unpaged_edata);
@@ -385,13 +385,13 @@ kinfo_t *pre_init(int argc, char **argv)
          * is the program name (load address) and the rest are
 	 * arguments. by convention the second argument is the
 	 *  command line */
-*(volatile int*)0x3f201000 = '2';
+
 	if (argc != 2) {
 		POORMANS_FAILURE_NOTIFICATION;
 	}
 	bootargs = argv[1];
 	set_machine_id(bootargs);
-*(volatile int*)0x3f201000 = '3';
+
 	/* Set up GPIO for PL011 UART */
 #define RPI_GPFSEL1   0x3f200004
 #define RPI_GPPUD     0x3f200094
@@ -404,9 +404,9 @@ kinfo_t *pre_init(int argc, char **argv)
 	*(volatile int*)RPI_GPPUDCLK0=  (0x3 << 15);
 	for (int delay = 150; delay; delay--);
 	*(volatile int*)RPI_GPPUDCLK0 = 0;
-*(volatile int*)0x3f201000 = '4';
+
 	bsp_ser_init();
-	bsp_ser_putc('5');
+
 	/* Get our own copy boot params pointed to by ebx.
 	 * Here we find out whether we should do serial output.
 	 */
@@ -420,9 +420,7 @@ kinfo_t *pre_init(int argc, char **argv)
 	pg_identity(&kinfo);
 	kinfo.freepde_start = pg_mapkernel();
 	pg_load();
-	bsp_ser_putc('7');
 	vm_enable_paging();
-	bsp_ser_putc('8');
 
 	/* Done, return boot info so it can be passed to kmain(). */
 	return &kinfo;

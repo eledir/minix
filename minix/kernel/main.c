@@ -124,7 +124,6 @@ void kmain(kinfo_t *local_cbi)
   register int i, j;
   static int bss_test;
 
-  *(volatile int*)0x3f201000 = '9';
   /* bss sanity check */
   assert(bss_test == 0);
   bss_test = 1;

@@ -51,7 +51,6 @@ fi
 . releasetools/image.defaults
 . releasetools/image.functions
 
-${RELEASETOOLSDIR}/checkout_repo.sh -o ${RELEASETOOLSDIR}/u-boot -b ${UBOOT_BRANCH} -n ${UBOOT_REVISION} ${UBOOT_URL}
 ${RELEASETOOLSDIR}/checkout_repo.sh -o ${RELEASETOOLSDIR}/rpi-firmware -b ${RPI_FIRMWARE_BRANCH} -n ${RPI_FIRMWARE_REVISION} ${RPI_FIRMWARE_URL}
 
 # where the kernel & boot modules will be
@@ -77,41 +76,43 @@ echo "Writing disk image..."
 #
 echo " * BOOT"
 rm -rf ${ROOT_DIR}/*
+# copy over all modules
 for i in ${MODDIR}/*
 do
 	cp $i ${ROOT_DIR}/$(basename $i).elf
 done
 ${CROSS_PREFIX}objcopy ${OBJ}/minix/kernel/kernel -O binary ${ROOT_DIR}/kernel.bin
+# create packer
+${CROSS_PREFIX}as ${RELEASETOOLSDIR}/rpi-bootloader/bootloader.S -o ${RELEASETOOLSDIR}/rpi-bootloader/bootloader.o
+${CROSS_PREFIX}ld ${RELEASETOOLSDIR}/rpi-bootloader/bootloader.o -o ${RELEASETOOLSDIR}/rpi-bootloader/bootloader.elf -Ttext=0x8000 2> /dev/null
+${CROSS_PREFIX}objcopy -O binary ${RELEASETOOLSDIR}/rpi-bootloader/bootloader.elf ${ROOT_DIR}/minix_rpi2.bin
+# pack modules
+(cd ${ROOT_DIR} && cat <<EOF | cpio -o --format=newc >> ${ROOT_DIR}/minix_rpi2.bin 2>/dev/null
+kernel.bin
+mod01_ds.elf
+mod02_rs.elf
+mod03_pm.elf
+mod04_sched.elf
+mod05_vfs.elf
+mod06_memory.elf
+mod07_tty.elf
+mod08_mfs.elf
+mod09_vm.elf
+mod10_pfs.elf
+mod11_init.elf
+EOF
+)
 cp -r releasetools/rpi-firmware/* ${ROOT_DIR}
-cp releasetools/u-boot/build/rpi/u-boot.bin ${ROOT_DIR}/u-boot-rpi.bin
-cp releasetools/u-boot/build/rpi_2/u-boot.bin ${ROOT_DIR}/u-boot-rpi2.bin
-cp releasetools/u-boot/build/rpi_3/u-boot.bin ${ROOT_DIR}/u-boot-rpi3.bin
 
 # Write GPU config file
 cat <<EOF >${ROOT_DIR}/config.txt
 [pi3]
-kernel=u-boot-rpi3.bin
+kernel=minix_rpi2.bin
 enable_uart=1
 
 [pi2]
-kernel=u-boot-rpi2.bin
-
-[pi1]
-kernel=u-boot-rpi.bin
+kernel=minix_rpi2.bin
 EOF
-
-# Write U-Boot boot script
-cat <<EOF >${ROOT_DIR}/boot.cmd
-fatload mmc 0 0x00200000 kernel.bin
-if test "\${board_name}" = "2 Model B"; then
-    go 0x00200000 "board_name=RPI_2_B"
-fi
-if test "\${board_name}" = "3 Model B"; then
-    go 0x00200000 "board_name=RPI_3_B"
-fi
-echo "Unknown board name \${board_name}"
-EOF
-mkimage -C none -A arm -T script -d ${ROOT_DIR}/boot.cmd ${ROOT_DIR}/boot.scr
 
 ${CROSS_TOOLS}/nbmakefs -t msdos -s $FAT_SIZE -O $FAT_START -o "F=32,c=1" ${IMG} ${ROOT_DIR} >/dev/null
 

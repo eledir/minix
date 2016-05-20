@@ -2,7 +2,6 @@
 
 /* sections */
 
-#include <arm/armreg.h>
 #include <machine/vm.h>
 #include "kernel/kernel.h"
 #include <minix/config.h>
@@ -30,29 +29,6 @@ MINIX:
 
 .text
 multiboot_init:
-#if 0
-	/* Leave HYP mode and move into supervisor mode with IRQs/FIQs disabled. */
-	mrs	r4, cpsr
-	and	r4, r4, #(PSR_MODE)	/* Mode is in the low 5 bits of CPSR */
-	teq	r4, #(PSR_HYP32_MODE)	/* Hyp Mode? */
-	bne	1f
-
-	/* Ensure that IRQ, and FIQ will be disabled after eret */
-	mrs	r4, cpsr
-	bic	r4, r4, #(PSR_MODE)
-	orr	r4, r4, #(PSR_SVC32_MODE)
-	orr	r4, r4, #(I32_bit | F32_bit)
-	msr	spsr_cxsf, r4
-	/* Exit hypervisor mode */
-	adr	lr, 2f
-	msr	elr_hyp, lr
-	/*eret*/
-
-1:
-	cpsid	if, #PSR_SVC32_MODE		// SVC32 with no interrupts
-
-2:
-#endif
 	ldr	sp, =load_stack_start	/* make usable stack */
 	mov	fp, #0
 	bl	_C_LABEL(pre_init)

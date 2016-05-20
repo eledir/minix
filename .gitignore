@@ -14,6 +14,7 @@ cscope.*
 lib*.so*
 *.a
 *.so.*
+*.elf
 *.d
 .depend
 nbsdsrc/*
