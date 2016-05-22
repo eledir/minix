@@ -181,7 +181,7 @@ int overlaps(multiboot_module_t *mod, int n, int cmp_mod)
 #define MB_MODS_NR NR_BOOT_MODULES
 #define MB_MODS_BASE  0x02000000
 #define MB_MODS_ALIGN 0x00800000 /* 8 MB */
-#define MB_MMAP_START 0x00000000
+#define MB_MMAP_START 0x00010000
 #define MB_MMAP_SIZE  0x30000000 /* 256 MB */
 
 multiboot_module_t mb_modlist[MB_MODS_NR];
