@@ -53,7 +53,7 @@ bsp_irq_handle(void)
 	/* Function called from assembly to handle interrupts */
 	uint64_t irq_bit = 1;
 	uint64_t irq_pending = mmio_read(rpi3_intr.base + RPI3_INTR_PENDING1) |
-	                       mmio_read(rpi3_intr.base + RPI3_INTR_PENDING2) << 32;
+	                       ((u64_t)mmio_read(rpi3_intr.base + RPI3_INTR_PENDING2)) << 32;
 
 	/* Scan all interrupts bits */
 	for (int irq = 0; irq < 64; irq++) {

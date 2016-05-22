@@ -165,6 +165,8 @@ void pg_identity(kinfo_t *cbi)
 	 */
 	assert(cbi->mem_high_phys);
 
+	printf("pg_identity(), pagedir=%08lx\n", pagedir);
+
         /* Set up an identity mapping page directory */
 	 for(i = 0; i < ARM_VM_DIR_ENTRIES; i++) {
 		u32_t flags = ARM_VM_SECTION
@@ -189,6 +191,9 @@ int pg_mapkernel(void)
 	assert(!(kern_vir_start % ARM_SECTION_SIZE));
 	assert(!(kern_phys_start % ARM_SECTION_SIZE));
 	pde = kern_vir_start / ARM_SECTION_SIZE; /* start pde */
+	
+	printf("pg_mapkernel(), pagedir=%08lx\n", pagedir);
+	
 	while(mapped < kern_kernlen) {
 		pagedir[pde] = (kern_phys & ARM_VM_SECTION_MASK) 
 			| ARM_VM_SECTION
@@ -207,6 +212,7 @@ void vm_enable_paging(void)
 	u32_t sctlr;
 	u32_t actlr;
 
+	printf("vm_enable_paging()...");
 	write_ttbcr(0);
 
 	/* Set all Domains to Client */
@@ -238,17 +244,22 @@ void vm_enable_paging(void)
 	write_actlr(actlr);
 #endif
 	write_sctlr(sctlr);
+
+	printf(" done\n");
 }
 
 phys_bytes pg_load()
 {
+	printf("pg_load()...");
 	phys_bytes phpagedir = vir2phys(pagedir);
 	write_ttbr0(phpagedir);
+	printf(" done\n");
 	return phpagedir;
 }
 
 void pg_clear(void)
 {
+	printf("pg_clear(), pagedir=%08lx\n", pagedir);
 	memset(pagedir, 0, sizeof(pagedir));
 }
 
@@ -268,10 +279,13 @@ void pg_map(phys_bytes phys, vir_bytes vaddr, vir_bytes vaddr_end,
 	static u32_t *pt = NULL;
 	int pde, pte;
 
+	printf("pg_map(%08lx, %08lx, %08lx, %08lx)\n", (void*)phys, (void*)vaddr, (void*)vaddr_end, (void*)cbi);
+
 	assert(kernel_may_alloc);
 
 	if(phys == PG_ALLOCATEME) {
 		assert(!(vaddr % ARM_PAGE_SIZE));
+		print_memmap(cbi);
 	} else  {
 		assert((vaddr % ARM_PAGE_SIZE) == (phys % ARM_PAGE_SIZE));
 		vaddr = pg_rounddown(vaddr);
@@ -307,6 +321,9 @@ void pg_map(phys_bytes phys, vir_bytes vaddr, vir_bytes vaddr_end,
 		if(phys != PG_ALLOCATEME) {
 			phys += ARM_PAGE_SIZE;
 		}
+	}
+	if(phys == PG_ALLOCATEME) {
+		print_memmap(cbi);
 	}
 }
 

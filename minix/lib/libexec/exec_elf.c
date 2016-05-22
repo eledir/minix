@@ -17,7 +17,7 @@
 #include <minix/syslib.h>
 
 /* For verbose logging */
-#define ELF_DEBUG 0
+#define ELF_DEBUG 1
 
 /* Support only 32-bit ELF objects */
 #define __ELF_WORD_SIZE 32
@@ -131,14 +131,13 @@ int libexec_load_elf(struct exec_info *execi)
 	int e, i = 0;
 	int first = 1;
 	vir_bytes startv = 0, stacklow;
-
+	printf("libexec_load_elf()\n");
 	assert(execi != NULL);
 	assert(execi->hdr != NULL);
-
 	if((e=elf_unpack(execi->hdr, execi->hdr_len, &hdr, &phdr)) != OK) {
 		return e;
 	 }
-
+	
 	/* this function can load the dynamic linker, but that
 	 * shouldn't require an interpreter itself.
 	 */
@@ -146,7 +145,6 @@ int libexec_load_elf(struct exec_info *execi)
 	if(i > 0) {
 	      return ENOEXEC;
 	}
-
 	execi->stack_size = roundup(execi->stack_size, PAGE_SIZE);
 	execi->stack_high = rounddown(execi->stack_high, PAGE_SIZE);
 	stacklow = execi->stack_high - execi->stack_size;
@@ -156,7 +154,6 @@ int libexec_load_elf(struct exec_info *execi)
 	assert(execi->allocmem_prealloc_cleared);
 	assert(execi->allocmem_prealloc_junk);
 	assert(execi->allocmem_ondemand);
-
 	for (i = 0; i < hdr->e_phnum; i++) {
 		Elf_Phdr *ph = &phdr[i];
 		off_t file_limit = ph->p_offset + ph->p_filesz;
@@ -308,7 +305,7 @@ int libexec_load_elf(struct exec_info *execi)
 	/* record entry point and lowest load vaddr for caller */
 	execi->pc = hdr->e_entry + execi->load_offset;
 	execi->load_base = startv;
-
+printf("~\n");
 	return OK;
 }
 
