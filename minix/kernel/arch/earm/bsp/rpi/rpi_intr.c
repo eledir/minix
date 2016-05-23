@@ -22,6 +22,7 @@ static struct rpi3_intr
 } rpi3_intr;
 
 static kern_phys_map intr_phys_map;
+static kern_phys_map timer_phys_map;
 
 int
 intr_init(const int auto_eoi)
@@ -42,13 +43,18 @@ intr_init(const int auto_eoi)
 	    &intr_phys_map, (vir_bytes) & rpi3_intr.base);
 	kern_phys_map_ptr(rpi3_intr.core_base, rpi3_intr.size,
 	    VMMF_UNCACHED | VMMF_WRITE,
-	    &intr_phys_map, (vir_bytes) & rpi3_intr.core_base);
+	    &timer_phys_map, (vir_bytes) & rpi3_intr.core_base);
 
 	/* Disable FIQ and all interrupts */
 	mmio_write(rpi3_intr.base + RPI3_INTR_FIQ_CTRL, 0);
 	mmio_write(rpi3_intr.base + RPI3_INTR_DISABLE1, 0xFFFFFFFF);
 	mmio_write(rpi3_intr.base + RPI3_INTR_DISABLE2, 0xFFFFFFFF);
 	mmio_write(rpi3_intr.base + RPI3_INTR_DISABLE_BASIC, 0xFFFFFFFF);
+
+	/*
+	 * Enable ARM timer routing to IRQ here.
+	 */
+	mmio_write(rpi3_intr.core_base + QA7_CORE0TIMER, 0x8);
 
 	return 0;
 }

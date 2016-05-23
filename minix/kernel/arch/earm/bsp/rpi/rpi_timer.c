@@ -102,13 +102,11 @@ static irq_hook_t arm_timer_hook;
 
 struct arm_timer
 {
-	vir_bytes base;
 	int irq_nr;
 	u32_t freq;
 };
 
 static struct arm_timer arm_timer = {
-	.base = RPI3_QA7_BASE,
  	.irq_nr = RPI3_IRQ_ARMTIMER,
 	.freq = 0,
 };
@@ -143,11 +141,6 @@ kern_phys_fr_user_mapped(vir_bytes id, phys_bytes address)
 void
 bsp_timer_init(unsigned freq)
 {
-	kern_phys_map_ptr(arm_timer.base, ARM_PAGE_SIZE,
-		    VMMF_UNCACHED | VMMF_WRITE, &stc_timer_phys_map,
-		    (vir_bytes) & arm_timer.base);
-
-	mmio_write(arm_timer.base + QA7_CORE0TIMER, 0x8);
 	arm_timer.freq = freq;
 }
 
@@ -160,7 +153,6 @@ bsp_timer_stop()
 void
 bsp_timer_int_handler()
 {
-	printf(".");
 	write_cntv_cval(-1);
 	write_cntv_tval(read_cntfrq() / arm_timer.freq);
 	write_cntv_ctl(ARMTIMER_ENABLE);
