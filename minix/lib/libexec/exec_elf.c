@@ -17,7 +17,7 @@
 #include <minix/syslib.h>
 
 /* For verbose logging */
-#define ELF_DEBUG 1
+#define ELF_DEBUG 0
 
 /* Support only 32-bit ELF objects */
 #define __ELF_WORD_SIZE 32
@@ -131,7 +131,6 @@ int libexec_load_elf(struct exec_info *execi)
 	int e, i = 0;
 	int first = 1;
 	vir_bytes startv = 0, stacklow;
-	printf("libexec_load_elf()\n");
 	assert(execi != NULL);
 	assert(execi->hdr != NULL);
 	if((e=elf_unpack(execi->hdr, execi->hdr_len, &hdr, &phdr)) != OK) {
@@ -305,7 +304,7 @@ int libexec_load_elf(struct exec_info *execi)
 	/* record entry point and lowest load vaddr for caller */
 	execi->pc = hdr->e_entry + execi->load_offset;
 	execi->load_base = startv;
-printf("~\n");
+
 	return OK;
 }
 

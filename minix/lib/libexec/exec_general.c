@@ -64,18 +64,14 @@ int libexec_clear_sys_memset(struct exec_info *execi, vir_bytes vaddr, size_t le
 int libexec_copy_memcpy(struct exec_info *execi,
 	off_t off, vir_bytes vaddr, size_t len)
 {
-	printf("libexec_copy_memcpy(%08lx, %d, %08lx, %u)\n", execi, off, vaddr, len);
 	assert(off + len <= execi->hdr_len);
 	memcpy((char *) vaddr, (char *) execi->hdr + off, len);
-	printf("libexec_copy_memcpy() memcpy done\n");
 	return OK;
 }
 
 int libexec_clear_memset(struct exec_info *execi, vir_bytes vaddr, size_t len)
 {
-	printf("libexec_clear_memset(%08lx, %08lx, %u)\n", execi, vaddr, len);
 	memset((char *) vaddr, 0, len);
-	printf("libexec_clear_memset() done\n");
 	return OK;
 }
 

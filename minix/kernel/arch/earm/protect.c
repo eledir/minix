@@ -105,20 +105,11 @@ void arch_post_init(void)
 
 static int libexec_pg_alloc(struct exec_info *execi, vir_bytes vaddr, size_t len)
 {
-	DEBUGMAX(("libexec_pg_alloc(%08lx, %lu)\n", vaddr, len));
 	pg_map(PG_ALLOCATEME, vaddr, vaddr+len, &kinfo);
 	pg_load();
-	DEBUGMAX(("libexec_pg_alloc() memset()\n"));
 	memset((char *) vaddr, 0, len);
 	alloc_for_vm += len;
-	DEBUGMAX(("libexec_pg_alloc() done\n"));
 	return OK;
-}
-
-static int libexec_clearproc(struct exec_info *execi)
-{
-	DEBUGMAX(("libexec_clearproc(%08lx)\n", execi));
-	return 0;
 }
 
 void arch_boot_proc(struct boot_image *ip, struct proc *rp)
@@ -126,8 +117,6 @@ void arch_boot_proc(struct boot_image *ip, struct proc *rp)
 	multiboot_module_t *mod;
 	struct ps_strings *psp;
 	char *sp;
-	
-	DEBUGMAX(("arch_boot_proc(%08lx, %08lx)\n", ip, rp));
 
 	if(rp->p_nr < 0) return;
 
@@ -157,7 +146,6 @@ void arch_boot_proc(struct boot_image *ip, struct proc *rp)
 		execi.allocmem_prealloc_junk = libexec_pg_alloc;
 		execi.allocmem_prealloc_cleared = libexec_pg_alloc;
 		execi.allocmem_ondemand = libexec_pg_alloc;
-		execi.clearproc = libexec_clearproc;
 
 		/* parse VM ELF binary and alloc/map it into bootstrap pagetable */
 		if(libexec_load_elf(&execi) != OK)

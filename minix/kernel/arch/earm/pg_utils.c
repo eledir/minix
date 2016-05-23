@@ -285,7 +285,6 @@ void pg_map(phys_bytes phys, vir_bytes vaddr, vir_bytes vaddr_end,
 
 	if(phys == PG_ALLOCATEME) {
 		assert(!(vaddr % ARM_PAGE_SIZE));
-		print_memmap(cbi);
 	} else  {
 		assert((vaddr % ARM_PAGE_SIZE) == (phys % ARM_PAGE_SIZE));
 		vaddr = pg_rounddown(vaddr);
@@ -321,9 +320,6 @@ void pg_map(phys_bytes phys, vir_bytes vaddr, vir_bytes vaddr_end,
 		if(phys != PG_ALLOCATEME) {
 			phys += ARM_PAGE_SIZE;
 		}
-	}
-	if(phys == PG_ALLOCATEME) {
-		print_memmap(cbi);
 	}
 }
 

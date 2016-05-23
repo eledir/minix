@@ -14,6 +14,10 @@
 #include "rpi_intr_registers.h"
 #include "bsp_intr.h"
 
+#include "cpufunc_timer.h"
+
+#if 0
+
 static irq_hook_t rpi3_timer_hook;
 
 struct stc_timer
@@ -90,4 +94,81 @@ read_tsc_64(u64_t * t)
 {
 	*t = ((u64_t)mmio_read(stc_timer.base + STC_CHI)) << 32;
 	*t |= mmio_read(stc_timer.base + STC_CLO);
+}
+
+#endif
+
+static irq_hook_t arm_timer_hook;
+
+struct arm_timer
+{
+	vir_bytes base;
+	int irq_nr;
+	u32_t freq;
+};
+
+static struct arm_timer arm_timer = {
+	.base = RPI3_QA7_BASE,
+ 	.irq_nr = RPI3_IRQ_ARMTIMER,
+	.freq = 0,
+};
+
+static kern_phys_map stc_timer_phys_map;
+
+int
+bsp_register_timer_handler(const irq_handler_t handler)
+{
+	/* Initialize the CLOCK's interrupt hook. */
+	arm_timer_hook.proc_nr_e = NONE;
+	arm_timer_hook.irq = arm_timer.irq_nr;
+
+	put_irq_handler(&arm_timer_hook, arm_timer.irq_nr, handler);
+
+	/* Prepare next firing of timer */
+	bsp_timer_int_handler();
+
+	/* only unmask interrupts after registering */
+	bsp_irq_unmask(arm_timer.irq_nr);
+
+	return 0;
+}
+
+/* callback for when the free running clock gets mapped */
+int
+kern_phys_fr_user_mapped(vir_bytes id, phys_bytes address)
+{
+	return 0;
+}
+
+void
+bsp_timer_init(unsigned freq)
+{
+	kern_phys_map_ptr(arm_timer.base, ARM_PAGE_SIZE,
+		    VMMF_UNCACHED | VMMF_WRITE, &stc_timer_phys_map,
+		    (vir_bytes) & arm_timer.base);
+
+	mmio_write(arm_timer.base + QA7_CORE0TIMER, 0x8);
+	arm_timer.freq = freq;
+}
+
+void
+bsp_timer_stop()
+{
+	bsp_irq_mask(arm_timer.irq_nr);
+}
+
+void
+bsp_timer_int_handler()
+{
+	printf(".");
+	write_cntv_cval(-1);
+	write_cntv_tval(read_cntfrq() / arm_timer.freq);
+	write_cntv_ctl(ARMTIMER_ENABLE);
+}
+
+/* Use the free running clock as TSC */
+void
+read_tsc_64(u64_t * t)
+{
+	*t = read_cntv_cval();
 }
