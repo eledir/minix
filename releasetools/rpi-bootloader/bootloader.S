@@ -180,14 +180,14 @@ load_file_failed:
  */
 putc:
 	/* Loop as long as FIFO isn't empty */
-	ldr	r1, =0x3f201018
+	ldr	r1, =0x3f201018 /*mini 0x3f215064, full 0x3f201018*/
 	ldr	r1, [r1]
-	and	r1, #0x80
-	tst	r1, #0x80
+	and	r1, #0x80 /*mini 0x100, full 0x80*/
+	tst	r1, #0x80 /*mini 0x100, full 0x80*/
 	beq	putc
 
 	# Write character
-	ldr	r1, =0x3f201000
+	ldr	r1, =0x3f201000 /*mini 0x3f215040, full 0x3f201000*/
 	str	r0, [r1]
 
 	bx	lr
@@ -314,7 +314,7 @@ argv:
 argv0:
 	.asciz "0x00200000"
 argv1:
-	.asciz "board_name=RPI_2_B"
+	.asciz "board_name=RPI_3_B"
 
 msg_empty:
 	.asciz ""

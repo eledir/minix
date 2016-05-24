@@ -109,6 +109,7 @@ cat <<EOF >${ROOT_DIR}/config.txt
 [pi3]
 kernel=minix_rpi2.bin
 enable_uart=1
+dtoverlay=pi3-disable-bt
 
 [pi2]
 kernel=minix_rpi2.bin
