@@ -13,7 +13,7 @@ CPPFLAGS+= -DUSE_PCI
 .endif
 
 DPADD+=	${LIBSYS} ${LIBEXEC}
-LDADD+=	-lsys -lexec
+LDADD+=	-lsys -lexec -Ttext 0x1000000
 
 CPPFLAGS+=	-I${NETBSDSRCDIR}/minix
 

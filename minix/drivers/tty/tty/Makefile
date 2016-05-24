@@ -6,7 +6,7 @@ PROG=	tty
 SRCS +=	tty.c
 
 DPADD+=	${LIBCHARDRIVER} ${LIBSYS} ${LIBTIMERS}
-LDADD+=	-lchardriver -lsys -ltimers
+LDADD+=	-lchardriver -lsys -ltimers -Ttext 0x3800000
 
 SUBDIR= keymaps
 

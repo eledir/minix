@@ -3,7 +3,7 @@ PROG=	ds
 SRCS=	main.c store.c
 
 DPADD+=	${LIBSYS}
-LDADD+=	-lsys
+LDADD+=	-lsys -Ttext 0x800000
 
 # FIXME: workaround for the linker pass not seeing weak symbols. The
 # following symbols are essential for magic instrumentation, since they

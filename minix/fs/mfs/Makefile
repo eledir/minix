@@ -6,7 +6,7 @@ SRCS=	cache.c link.c \
 	write.c inode.c main.c path.c super.c
 
 DPADD+=	${LIBMINIXFS} ${LIBFSDRIVER} ${LIBBDEV} ${LIBSYS}
-LDADD+= -lminixfs -lfsdriver -lbdev -lsys
+LDADD+= -lminixfs -lfsdriver -lbdev -lsys -Ttext 0x4000000
 
 CPPFLAGS+= -DDEFAULT_NR_BUFS=1024
 

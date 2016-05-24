@@ -10,7 +10,7 @@ MKBUILDEXT2RD?=	no
 
 RAMDISK_PATH= ${NETBSDSRCDIR}/minix/drivers/storage/ramdisk
 DPADD+=	${LIBBLOCKDRIVER} ${LIBCHARDRIVER}
-LDADD+=	-lblockdriver -lchardriver
+LDADD+=	-lblockdriver -lchardriver -Ttext 0x3000000
 
 CPPFLAGS.memory.c+=	-I${NETBSDSRCDIR}/minix
 

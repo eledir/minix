@@ -14,8 +14,8 @@ SRCS+=  gcov.c
 CPPFLAGS+= -DUSE_COVERAGE
 .endif
 
-CFLAGS+= -Wall -Wextra -Wno-sign-compare -Werror
+CFLAGS+= -Wall -Wextra -Wno-sign-compare -Werror -g
 DPADD+=	${LIBSYS} ${LIBTIMERS} ${LIBEXEC}
-LDADD+=	-lsys -ltimers -lexec -lmthread
+LDADD+=	-lsys -ltimers -lexec -lmthread -Ttext 0x2800000
 
 .include <minix.service.mk>

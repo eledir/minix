@@ -4,8 +4,8 @@
 PROG=	init
 MAN=	init.8
 DPADD=	${LIBUTIL}
-LDADD=	-lutil
-CPPFLAGS+=	-DMFS_DEV_IF_NO_CONSOLE -DSUPPORT_UTMP -DSUPPORT_UTMPX
+LDADD=	-lutil -Ttext 0x5800000
+CPPFLAGS+=	-DMFS_DEV_IF_NO_CONSOLE -DSUPPORT_UTMP -DSUPPORT_UTMPX -g
 
 #.if defined(__MINIX)
 # BJG - by default produce line numbers in case init exits without producing

@@ -16,7 +16,7 @@ DPADD+=	${LIBSYS} ${LIBEXEC}
 LDADD+=	-lsys -lexec
 
 CPPFLAGS+= -I${.CURDIR} -I${.CURDIR}/arch/${MACHINE_ARCH}
-CPPFLAGS+= -I${NETBSDSRCDIR}/minix
+CPPFLAGS+= -I${NETBSDSRCDIR}/minix -g
 
 # For all other services, magic instrumentation involves instrumenting the
 # libc malloc code, hooking its nested mmap/munmap calls, and ignoring its
