@@ -62,6 +62,14 @@ load_files_loop:
 final_preparations:
 	/* Set up args and jump */
 	ldr	r0, =msg_launch
+	bl	print
+	mov	r0, #0x22
+	bl	putc
+	ldr	r0, =argv1
+	bl	print
+	mov	r0, #0x22
+	bl	putc
+	ldr	r0, =msg_empty
 	bl	puts
 	mov	r0, #2
 	ldr	r1, =argv
@@ -327,7 +335,7 @@ msg_hypmode:
 msg_extract:
 	.asciz "Extracting modules..."
 msg_launch:
-	.asciz "Jumping into kernel."
+	.asciz "Jumping into kernel, argv[1]="
 msg_size:
 	.asciz " size:0x"
 msg_addr:
