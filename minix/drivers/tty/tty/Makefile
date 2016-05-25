@@ -11,7 +11,7 @@ LDADD+=	-lchardriver -lsys -ltimers -Ttext 0x3800000
 SUBDIR= keymaps
 
 # Needs kernel/const.h, etc
-CPPFLAGS+=	-I${.CURDIR}	-I${NETBSDSRCDIR}
+CPPFLAGS+=	-I${.CURDIR}	-I${NETBSDSRCDIR} -g
 
 .include <minix.service.mk>
 .include <bsd.subdir.mk>
