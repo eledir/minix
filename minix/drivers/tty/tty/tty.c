@@ -37,7 +37,7 @@
 #include <sys/time.h>
 #include <sys/select.h>
 
-unsigned long rs_irq_set = 0;
+u64_t rs_irq_set = 0;
 
 /* Address of a tty structure. */
 #define tty_addr(line)	(&tty_table[line])

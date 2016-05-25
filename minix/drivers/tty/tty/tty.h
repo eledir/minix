@@ -91,7 +91,7 @@ extern int ccurrent;		/* currently visible console */
 extern u32_t system_hz;		/* system clock frequency */
 
 extern unsigned long kbd_irq_set;
-extern unsigned long rs_irq_set;
+extern u64_t rs_irq_set;
 
 /* Values for the fields. */
 #define NOT_ESCAPED        0	/* previous character is not LNEXT (^V) */

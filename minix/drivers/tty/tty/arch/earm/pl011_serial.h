@@ -20,8 +20,12 @@
 #define PL011_ICR		0x044	/* Interrupt clear register */
 #define PL011_DMACR		0x048	/* DMA control register */
 
-#define PL011_RXRIS	0x08
-#define PL011_TXRIS	0x10
+#define PL011_RXRIS	0x10
+#define PL011_TXRIS	0x20
+
+#define PL011_RXFE	0x10
+#define PL011_TXFF	0x20
+
 /* Line Control Register bits */
 // #define PL011_LCR_PEN	0x01	/* Enable parity */
 

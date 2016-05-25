@@ -24,6 +24,20 @@ static struct rpi3_intr
 static kern_phys_map intr_phys_map;
 static kern_phys_map timer_phys_map;
 
+static irq_hook_t dummy8_irq_hook;
+static irq_hook_t dummy41_irq_hook;
+static irq_hook_t dummy51_irq_hook;
+
+void
+dummy_irq_handler()
+{
+	/*
+	 * The Raspberry Pi has a bunch of cascaded interrupts that are useless
+	 * for MINIX. This handler catches them so as not to pollute the console
+	 * with spurious interrupts messages.
+	 */
+}
+
 int
 intr_init(const int auto_eoi)
 {
@@ -47,14 +61,18 @@ intr_init(const int auto_eoi)
 
 	/* Disable FIQ and all interrupts */
 	mmio_write(rpi3_intr.base + RPI3_INTR_FIQ_CTRL, 0);
+	mmio_write(rpi3_intr.base + RPI3_INTR_DISABLE_BASIC, 0xFFFFFFFF);
 	mmio_write(rpi3_intr.base + RPI3_INTR_DISABLE1, 0xFFFFFFFF);
 	mmio_write(rpi3_intr.base + RPI3_INTR_DISABLE2, 0xFFFFFFFF);
-	mmio_write(rpi3_intr.base + RPI3_INTR_DISABLE_BASIC, 0xFFFFFFFF);
 
 	/*
 	 * Enable ARM timer routing to IRQ here.
 	 */
 	mmio_write(rpi3_intr.core_base + QA7_CORE0TIMER, 0x8);
+
+	put_irq_handler(&dummy8_irq_hook, 8, dummy_irq_handler);
+	put_irq_handler(&dummy41_irq_hook, 41, dummy_irq_handler);
+	put_irq_handler(&dummy51_irq_hook, 51, dummy_irq_handler);
 
 	return 0;
 }
@@ -63,14 +81,15 @@ void
 bsp_irq_handle(void)
 {
 	/* Function called from assembly to handle interrupts */
-	uint64_t irq_bit = 1;
 	uint32_t irq_0_31 = mmio_read(rpi3_intr.core_base + QA7_CORE0INT);
 	uint32_t irq_32_63 = mmio_read(rpi3_intr.base + RPI3_INTR_BASIC_PENDING);
 	uint32_t irq_64_95 = mmio_read(rpi3_intr.base + RPI3_INTR_PENDING1);
 	uint64_t irq_96_128 = mmio_read(rpi3_intr.base + RPI3_INTR_PENDING2);
 
+	int irq = 0;
+
 	/* Scan all interrupts bits */
-	for (int irq = 0; irq < 96; irq++) {
+	for (irq = 0; irq < 128; irq++) {
 		int is_pending = 0;
 		if (irq < 32)
 			is_pending = irq_0_31 & (1 << irq);

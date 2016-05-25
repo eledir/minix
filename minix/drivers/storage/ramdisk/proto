@@ -2,6 +2,10 @@ boot
 0 0
 d--755 0 0
 	bin d--755 0 0
+		ls ---755 0 0 ls
+		cat ---755 0 0 cat
+		ps ---755 0 0 ps
+		chmod ---755 0 0 chmod
 #ifdef __i386__
 		cdprobe ---755 0 0 cdprobe
 #endif

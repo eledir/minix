@@ -136,7 +136,7 @@ typedef struct uart_port {
 // };
 
 static uart_port_t bcm2835_ports[] = {
-	{ PL011_UART0_BASE, 57+64},	/* UART0 */
+	{ PL011_UART0_BASE, 121 },	/* UART0 */
 	{ 0, 0 },
 	{ 0, 0 },
 	{ 0, 0 }
@@ -471,7 +471,7 @@ static void rs_config(rs232_t *rs)
 // 	else
 // 		serial_out(rs, OMAP3_MDR1, OMAP_MDR1_MODE16X);
 	
-// 	rs->ostate = devready(rs) | ORAW | OSWREADY;	/* reads MSR */
+	rs->ostate = ODEVREADY | ORAW | OSWREADY;	/* reads MSR */
 // 	if ((tp->tty_termios.c_lflag & IXON) && rs->oxoff != _POSIX_VDISABLE)
 // 		rs->ostate &= ~ORAW;
 // 	(void) serial_in(rs, OMAP3_IIR);
@@ -534,7 +534,7 @@ rs_init(tty_t *tp)
 	if (rs->phys_base ==  (vir_bytes) MAP_FAILED) {
 		panic("Unable to request access to UART memory");
 	}
-	rs->reg_offset = 2;
+	rs->reg_offset = 0;
 
 	rs->uartclk = UART_FREQ;
 	rs->ohead = rs->otail = rs->obuf;
@@ -550,9 +550,8 @@ rs_init(tty_t *tp)
 	/* Configure IRQ */
 	rs->irq = this_pl011.irq;
 
-	/* callback with irq line number + 1 because using line number 0 
-	   fails eslewhere */
-	rs->irq_hook_kernel_id = rs->irq_hook_id = line + 1;	
+	/* callback with irq line number */
+	rs->irq_hook_kernel_id = rs->irq_hook_id = line;
 
 	/* sys_irqsetpolicy modifies irq_hook_kernel_id. this modified id
 	 * needs to be used in sys_irqenable and similar calls.
@@ -588,7 +587,7 @@ rs_init(tty_t *tp)
 	tp->tty_open = rs_open;
 	tp->tty_close = rs_close;
 
-	serial_out(rs, PL011_IMSC, 0x18);
+	serial_out(rs, PL011_IMSC, PL011_RXRIS);
 
 	/* Tell external device we are ready. */
 	/// istart(rs);
@@ -603,7 +602,7 @@ rs_interrupt(message *m)
 
 	irq_set = m->m_notify.interrupts;
 	for (line = 0, rs = rs_lines; line < NR_RS_LINES; line++, rs++) {
-		if (irq_set & (1 << rs->irq_hook_id)) {
+		if ((irq_set & (1 << rs->irq_hook_id)) && (rs->phys_base != 0)) {
 			rs232_handler(rs);
 			if (sys_irqenable(&rs->irq_hook_kernel_id) != OK)
 				panic("unable to enable interrupts");
@@ -683,6 +682,8 @@ rs_ostart(rs232_t *rs)
 
 	rs->ostate |= OQUEUED;
 	/*if (txready(rs))*/ write_chars(rs); //////////////////////////////////
+
+	serial_out(rs, PL011_IMSC, PL011_TXRIS|PL011_RXRIS);
 }
 
 static int
@@ -747,10 +748,13 @@ rs232_handler(struct rs232 *rs)
 		/* Data ready interrupt */
 		read_chars(rs);
 	}
+	rs->ostate |= ODEVREADY;
 	if (ris & PL011_TXRIS) {
 		/* Ready to send and space available */
 		write_chars(rs);
 	}
+
+	serial_out(rs, PL011_ICR, ris);
 }
 
 static void
@@ -759,7 +763,7 @@ read_chars(rs232_t *rs)
 	unsigned char c;
 
 	/* check the line status to know if there are more chars */
-	while (!(serial_in(rs, PL011_FR) & 0x8)) {
+	while ((serial_in(rs, PL011_FR) & PL011_RXFE) == 0) {
 		c = serial_in(rs, PL011_DR);
 		if (!(rs->ostate & ORAW)) {
 			if (c == rs->oxoff) {
@@ -773,6 +777,8 @@ read_chars(rs232_t *rs)
 			/* no buffer space? keep reading */
 			continue;
 		}
+
+		++rs->icount;
 
 		*rs->ihead = c;
 		if (++rs->ihead == bufend(rs->ibuf)) {
@@ -793,15 +799,17 @@ write_chars(rs232_t *rs)
  * Notify TTY when the buffer goes empty.
  */
 
-	if (rs->ostate >= (ODEVREADY | OQUEUED | OSWREADY)) {
+	while ((rs->ostate >= (OQUEUED | OSWREADY)) && ((serial_in(rs, PL011_FR) & PL011_TXFF) == 0)) {
 		/* Bit test allows ORAW and requires the others. */
 		serial_out(rs, PL011_DR, *rs->otail);
 		if (++rs->otail == bufend(rs->obuf))
 			rs->otail = rs->obuf;
 		if (--rs->ocount == 0) {
+			serial_out(rs, PL011_IMSC, PL011_RXRIS);
 			/* Turn on ODONE flag, turn off OQUEUED */
-			rs->ostate ^= (ODONE | OQUEUED); 
+			rs->ostate ^= (ODONE | OQUEUED);
 			rs->tty->tty_events = 1;
+
 		} else  {
 			if (rs->icount == RS_OLOWWATER)
 				rs->tty->tty_events = 1;
@@ -814,7 +822,7 @@ check_modem_status(rs232_t *rs)
 {
 /* Check modem status */
 
-	unsigned int msr;
+	unsigned int msr = 0;
 
 	// msr = serial_in(rs, OMAP3_MSR); /* Resets modem interrupt */
 	// if ((msr & (UART_MSR_DCD|UART_MSR_DDCD)) == UART_MSR_DDCD) {

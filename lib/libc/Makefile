@@ -22,7 +22,7 @@
 LIBC_MACHINE_ARCH?=	${MACHINE_ARCH}		# for MKCOMPAT
 
 LIB=		c
-CPPFLAGS+=	-I${.CURDIR}/include -I${.CURDIR}
+CPPFLAGS+=	-I${.CURDIR}/include -I${.CURDIR} -g
 
 LIBCDIR=	${.CURDIR}
 

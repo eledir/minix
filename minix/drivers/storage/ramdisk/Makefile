@@ -94,6 +94,16 @@ dir.acpi:=	minix/drivers/power/acpi
 .if ${MACHINE_ARCH} == "earm"
 PROGRAMS+=		mmc
 dir.mmc:=	minix/drivers/storage/mmc
+PROGRAMS+=		fb
+dir.fb:=	minix/drivers/video/fb
+PROGRAMS+=		ls
+dir.ls:=	bin/ls
+PROGRAMS+=		cat
+dir.cat:=	bin/cat
+PROGRAMS+=		ps
+dir.ps:=	minix/commands/ps
+PROGRAMS+=		chmod
+dir.chmod:=	bin/chmod
 .endif # ${MACHINE_ARCH} == "earm"
 
 .if ${LDSTATIC} == "-dynamic"
