@@ -476,6 +476,14 @@ static void rs_config(rs232_t *rs)
 // 		rs->ostate &= ~ORAW;
 // 	(void) serial_in(rs, OMAP3_IIR);
 
+	/*
+	 * XXX: Disable FIFO otherwise only half of every received character
+	 * will trigger an interrupt.
+	 */
+	serial_out(rs, PL011_LCR_H, serial_in(rs, PL011_LCR_H) & ~PL011_FEN);
+	/* Set interrupt levels */
+	serial_out(rs, PL011_IFLS, 0x0);
+
 	if (sys_irqenable(&rs->irq_hook_kernel_id) != OK)
 		panic("unable to enable interrupts");
 }

@@ -66,7 +66,7 @@ bsp_ser_init()
 	}
 
 	mmio_write(pl011_serial.base + PL011_LCRH, 0x70);
-	mmio_write(pl011_serial.base + PL011_CR, 0x101);
+	mmio_write(pl011_serial.base + PL011_CR, 0x301);
 }
 
 void

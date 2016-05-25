@@ -26,6 +26,8 @@
 #define PL011_RXFE	0x10
 #define PL011_TXFF	0x20
 
+#define PL011_FEN	0x10
+
 /* Line Control Register bits */
 // #define PL011_LCR_PEN	0x01	/* Enable parity */
 
