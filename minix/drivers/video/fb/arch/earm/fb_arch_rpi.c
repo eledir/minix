@@ -45,7 +45,7 @@ static void configure_with_defaults(int minor);
 
 /* globals */
 static vir_bytes mbox_phys_base;	/* Address of dss phys memory map */
-static vir_bytes mboxbuffer_vir;	/* Address of dss phys memory map */
+static u32_t* mboxbuffer_vir;	/* Address of dss phys memory map */
 static phys_bytes mboxbuffer_phys;	/* Address of dss phys memory map */
 
 static vir_bytes fb_vir;
@@ -59,15 +59,15 @@ static int initialized = 0;
 #define MAILBOX0_WRITE   0x8a0
 
 struct panel_config {
-        u32_t timing_h;
-        u32_t timing_v;
-        u32_t pol_freq;
-        u32_t divisor;
-        u32_t lcd_size;
-        u32_t panel_type;
-        u32_t data_lines;
-        u32_t load_mode;
-        u32_t panel_color;
+	u32_t timing_h;
+	u32_t timing_v;
+	u32_t pol_freq;
+	u32_t divisor;
+	u32_t lcd_size;
+	u32_t panel_type;
+	u32_t data_lines;
+	u32_t load_mode;
+	u32_t panel_color;
 };
 
 static const struct fb_fix_screeninfo default_fbfs = {
@@ -123,13 +123,13 @@ static struct log log = {
 static inline u32_t
 readw(vir_bytes addr)
 {
-        return *((volatile u32_t *) addr);
+	return *((volatile u32_t *) addr);
 }
 
 static inline void
 writew(vir_bytes addr, u32_t val)
 {
-        *((volatile u32_t *) addr) = val;
+	*((volatile u32_t *) addr) = val;
 }
 
 static u32_t readmailbox(unsigned channel)
@@ -150,12 +150,10 @@ static u32_t readmailbox(unsigned channel)
 
 static void writemailbox(unsigned channel, u32_t data)
 {
-	while (1) {
-		while(readw(mbox_phys_base+MAILBOX0_STATUS) & 0x80000000);
+	while(readw(mbox_phys_base+MAILBOX0_STATUS) & 0x80000000);
 
-		asm volatile("dmb" : : : "memory");
-		writew(mbox_phys_base+MAILBOX0_WRITE, data | channel);
-	}
+	asm volatile("dmb" : : : "memory");
+	writew(mbox_phys_base+MAILBOX0_WRITE, data | channel);
 }
 
 static void
@@ -183,49 +181,49 @@ arch_configure_display(int minor)
 	if (minor != 0) return;
 
 	int c = 1;
-	writew(mboxbuffer_vir + (c++), 0);
-	writew(mboxbuffer_vir + (c++), 0x00048004); /* set virtual size */
-	writew(mboxbuffer_vir + (c++), 8);
-	writew(mboxbuffer_vir + (c++), 8);
-	writew(mboxbuffer_vir + (c++), omap_fbvs[0].xres_virtual);
-	writew(mboxbuffer_vir + (c++), omap_fbvs[0].yres_virtual);
-	writew(mboxbuffer_vir + (c++), 8);
-	writew(mboxbuffer_vir + (c++), 0x00048005); /* set depth */
-	writew(mboxbuffer_vir + (c++), 4);
-	writew(mboxbuffer_vir + (c++), 4);
-	writew(mboxbuffer_vir + (c++), omap_fbvs[0].bits_per_pixel);
-	writew(mboxbuffer_vir + (c++), 0x00040001); /* allocate framebuffer */
-	writew(mboxbuffer_vir + (c++), 8);
-	writew(mboxbuffer_vir + (c++), 4);
-	writew(mboxbuffer_vir + (c++), 16);
-	writew(mboxbuffer_vir + (c++), 0);
-	writew(mboxbuffer_vir, c);
+	mboxbuffer_vir[c++] = 0;
+	mboxbuffer_vir[c++] = 0x00048004; /* set virtual size */
+	mboxbuffer_vir[c++] = 8;
+	mboxbuffer_vir[c++] = 8;
+	mboxbuffer_vir[c++] = omap_fbvs[0].xres_virtual;
+	mboxbuffer_vir[c++] = omap_fbvs[0].yres_virtual;
+	mboxbuffer_vir[c++] = 0x00048005; /* set depth */
+	mboxbuffer_vir[c++] = 4;
+	mboxbuffer_vir[c++] = 4;
+	mboxbuffer_vir[c++] = omap_fbvs[0].bits_per_pixel;
+	mboxbuffer_vir[c++] = 0x00040001; /* allocate framebuffer */
+	mboxbuffer_vir[c++] = 8;
+	mboxbuffer_vir[c++] = 4;
+	mboxbuffer_vir[c++] = 16;
+	mboxbuffer_vir[c++] = 0;
+	mboxbuffer_vir[0] = c*4;
 
 	writemailbox(8, mboxbuffer_phys + 0x40000000);
 
-	if (readmailbox(8) != 0x80000000)
+	if (mboxbuffer_vir[1] != 0x80000000)
 		panic("Unable to configure framebuffer");
 
 	c = 2;
-	while (readw(mboxbuffer_vir+c) != 0x40001)
-		c += 3 + (readw(mboxbuffer_vir+c+1) >> 2);
+	while (mboxbuffer_vir[c] != 0x40001)
+		c += 3 + (mboxbuffer_vir[c+1] >> 2);
 
-	if (readw(mboxbuffer_vir+c+2) != 0x80000008)
+	if (mboxbuffer_vir[c+2] != 0x80000008)
 		panic("Unrecognized response from mailbox");
 
 
 	/* Configure framebuffer memory access */
-	mr.mr_base = readw(mboxbuffer_vir+c+3) - 0x40000000;
-	mr.mr_limit = readw(mboxbuffer_vir+c+3) - 0x40000000 + readw(mboxbuffer_vir+c+4);
+	mboxbuffer_vir[c+3] -= 0xf0000000;
+	mr.mr_base = mboxbuffer_vir[c+3];
+	mr.mr_limit = mboxbuffer_vir[c+3] + mboxbuffer_vir[c+4];
 	if (sys_privctl(SELF, SYS_PRIV_ADD_MEM, &mr) != OK) {
 		panic("Unable to request access to framebuffer memory");
 	}
-        fb_size = mr.mr_limit-mr.mr_base;
+	fb_size = mr.mr_limit-mr.mr_base;
 	fb_vir = (vir_bytes) vm_map_phys(SELF, (void *) mr.mr_base, fb_size);
 
-        if (fb_vir == (vir_bytes) MAP_FAILED) {
-                panic("Unable to map framebuffer memory");
-        }
+	if (fb_vir == (vir_bytes) MAP_FAILED) {
+		panic("Unable to map framebuffer memory");
+	}
 }
 
 int
@@ -306,19 +304,19 @@ arch_fb_init(int minor, struct edid_info *info)
 
 	initialized = 1;
 
-        /* Configure mailbox memory access */
-        mr.mr_base = MAILBOX_BASE;
-        mr.mr_limit = mr.mr_base + 0x1000;
-        if (sys_privctl(SELF, SYS_PRIV_ADD_MEM, &mr) != OK) {
-                panic("Unable to request access to mailbox memory");
-        }
+	/* Configure mailbox memory access */
+	mr.mr_base = MAILBOX_BASE;
+	mr.mr_limit = mr.mr_base + 0x1000;
+	if (sys_privctl(SELF, SYS_PRIV_ADD_MEM, &mr) != OK) {
+		panic("Unable to request access to mailbox memory");
+	}
 
-        mbox_phys_base = (vir_bytes) vm_map_phys(SELF, (void *) OMAP3_DSS_BASE,
+	mbox_phys_base = (vir_bytes) vm_map_phys(SELF, (void *) MAILBOX_BASE,
 						0x1000);
 
-        if (mbox_phys_base == (vir_bytes) MAP_FAILED) {
-                panic("Unable to map mailbox memory");
-        }
+	if (mbox_phys_base == (vir_bytes) MAP_FAILED) {
+		panic("Unable to map mailbox memory");
+	}
 
 	/* Allocate contiguous physical memory for the display buffer */
 #if 0

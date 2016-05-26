@@ -322,7 +322,7 @@ argv:
 argv0:
 	.asciz "0x00200000"
 argv1:
-	.asciz "board_name=RPI_2_B console=tty00"
+	.asciz "board_name=RPI_3_B console=tty00"
 
 msg_empty:
 	.asciz ""

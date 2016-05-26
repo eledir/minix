@@ -33,6 +33,7 @@ d--755 0 0
 #endif
 #ifdef __arm__
 		mmc ---755 0 0 mmc
+		fb ---755 0 0 fb
 #endif
 		mfs ---755 0 0 mfs
 		procfs ---755 0 0 procfs
