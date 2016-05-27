@@ -5,7 +5,7 @@ CPPFLAGS+= -D_SYSTEM -D_MINIX_SYSTEM
 LIB=	gpio
 
 SRCS=	\
-	gpio_omap.c
+	gpio_rpi3.c
 
 WARNS?=	5
 
