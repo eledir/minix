@@ -19,6 +19,7 @@ then
 	. ${SETTINGS_MINIX}
 fi
 
+BSP_NAME=rpi
 : ${ARCH=evbearm-el}
 : ${TOOLCHAIN_TRIPLET=arm-elf32-minix-}
 : ${BUILDSH=build.sh}
