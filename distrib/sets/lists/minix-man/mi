@@ -282,6 +282,7 @@
 ./usr/man/man1/pwd.1                                    minix-man
 ./usr/man/man1/pwhash.1                                 minix-man
 ./usr/man/man1/ranlib.1                                 minix-man       binutils
+./usr/man/man1/readpng.1                                 minix-man
 ./usr/man/man1/rcmd.1                                   minix-man
 ./usr/man/man1/rcp.1                                    minix-man
 ./usr/man/man1/read.1                                   minix-man       obsolete

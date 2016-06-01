@@ -27,7 +27,7 @@ PROTO=			proto
 
 # Common to all architectures
 ETC=			system.conf group
-EXTRA=			rc
+EXTRA=			rc presentation-10.png presentation-1.png presentation-2.png presentation-3.png presentation-4.png presentation-5.png presentation-6.png presentation-7.png presentation-8.png presentation-9.png presentation.sh
 PROTO_FILES=		proto.common.etc
 PROTO_FILES+=		proto.common.dynamic
 PROGRAMS=		# defined
@@ -53,6 +53,10 @@ PROGRAMS+=		sysenv
 dir.sysenv:=	minix/commands/sysenv
 PROGRAMS+=		umount
 dir.umount:=	minix/commands/umount
+PROGRAMS+=		readpng
+dir.readpng:=	minix/commands/readpng
+PROGRAMS+=		sleep
+dir.sleep:=	bin/sleep
 
 .if ${MKSMALL} != "yes"
 RAMDISK_SMALL=		1

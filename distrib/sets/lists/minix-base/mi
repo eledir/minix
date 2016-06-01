@@ -419,6 +419,7 @@
 ./usr/bin/ps                                            minix-base
 ./usr/bin/pwhash                                        minix-base
 ./usr/bin/ramdisk                                       minix-base
+./usr/bin/readpng                                       minix-base
 ./usr/bin/rarpd                                         minix-base
 ./usr/bin/rawspeed                                      minix-base
 ./usr/bin/rcp                                           minix-base      obsolete

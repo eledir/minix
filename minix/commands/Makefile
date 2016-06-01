@@ -19,7 +19,7 @@ SUBDIR=	add_route arp at backup \
 	nonamed \
 	postinstall prep printroot \
 	profile progressbar pr_routes ps pwdauth \
-	ramdisk rarpd rawspeed readclock \
+	ramdisk rarpd rawspeed readclock readpng \
 	remsync rget rlogin \
 	rotate service setup \
 	slip spell sprofalyze sprofdiff srccrc \

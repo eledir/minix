@@ -6,6 +6,8 @@ d--755 0 0
 		cat ---755 0 0 cat
 		ps ---755 0 0 ps
 		chmod ---755 0 0 chmod
+		readpng ---755 0 0 readpng
+		sleep ---755 0 0 sleep
 #ifdef __i386__
 		cdprobe ---755 0 0 cdprobe
 #endif
@@ -52,6 +54,8 @@ d--755 0 0
 		$
 	$
 	proc d--755 0 0
+	$
+	gpio d--755 0 0
 	$
 	dev d--755 0 0
 #include "proto.dev"

@@ -1054,6 +1054,13 @@
 ./usr/include/openssl/x509v3.h                          minix-comp      crypto
 ./usr/include/paths.h                                   minix-comp
 ./usr/include/pci.h                                     minix-comp
+./usr/include/png.h	minix-comp
+./usr/include/pngconf.h	minix-comp
+./usr/include/pngdebug.h	minix-comp
+./usr/include/pnginfo.h	minix-comp
+./usr/include/pnglibconf.h	minix-comp
+./usr/include/pngpriv.h	minix-comp
+./usr/include/pngstruct.h	minix-comp
 ./usr/include/poll.h                                    minix-comp
 ./usr/include/ppath                                     minix-comp
 ./usr/include/ppath/ppath.h                             minix-comp
@@ -1572,6 +1579,8 @@
 ./usr/lib/libobjc_pic.a                                 minix-comp      gcc=45
 ./usr/lib/libpci.a                                      minix-comp
 ./usr/lib/libpci_pic.a                                  minix-comp
+./usr/lib/libpng.a	minix-comp
+./usr/lib/libpng_pic.a	minix-comp
 ./usr/lib/libprop.a                                     minix-comp
 ./usr/lib/libprop_pic.a                                 minix-comp
 ./usr/lib/libpuffs.a                                    minix-comp

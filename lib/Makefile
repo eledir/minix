@@ -307,6 +307,9 @@ SUBDIR+=	../sys/rump/net/lib
 .endif
 .endif
 
+
+SUBDIR+=	libpng
+
 # Lua bindings come last, they might depend on anything
 SUBDIR+=	lua
 
