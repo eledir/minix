@@ -25,6 +25,7 @@ static kern_phys_map intr_phys_map;
 static kern_phys_map timer_phys_map;
 
 static irq_hook_t dummy8_irq_hook;
+static irq_hook_t dummy40_irq_hook;
 static irq_hook_t dummy41_irq_hook;
 static irq_hook_t dummy51_irq_hook;
 
@@ -70,6 +71,7 @@ intr_init(const int auto_eoi)
 
 	/* Register dummy irq handlers */
 	put_irq_handler(&dummy8_irq_hook, 8, dummy_irq_handler);
+	put_irq_handler(&dummy41_irq_hook, 40, dummy_irq_handler);
 	put_irq_handler(&dummy41_irq_hook, 41, dummy_irq_handler);
 	put_irq_handler(&dummy51_irq_hook, 51, dummy_irq_handler);
 
