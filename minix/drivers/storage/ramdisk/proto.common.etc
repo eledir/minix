@@ -17,6 +17,9 @@
 		presentation-8.png ---644 0 0 presentation-8.png
 		presentation-9.png ---644 0 0 presentation-9.png
 		presentation-10.png ---644 0 0 presentation-10.png
+		presentation-11.png ---644 0 0 presentation-11.png
+		presentation-12.png ---644 0 0 presentation-12.png
+		presentation-13.png ---644 0 0 presentation-13.png
 #if defined(__i386__)
 		rs.single ---755 0 0 etc/rs.single
 #endif

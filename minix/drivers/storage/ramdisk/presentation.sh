@@ -1,6 +1,6 @@
 IMG_CUR=0
 IMG_MIN=1
-IMG_MAX=10
+IMG_MAX=13
 
 while true
 do

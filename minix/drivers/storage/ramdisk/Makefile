@@ -27,7 +27,7 @@ PROTO=			proto
 
 # Common to all architectures
 ETC=			system.conf group
-EXTRA=			rc presentation-10.png presentation-1.png presentation-2.png presentation-3.png presentation-4.png presentation-5.png presentation-6.png presentation-7.png presentation-8.png presentation-9.png presentation.sh
+EXTRA=			rc presentation-10.png presentation-11.png presentation-12.png presentation-13.png presentation-1.png presentation-2.png presentation-3.png presentation-4.png presentation-5.png presentation-6.png presentation-7.png presentation-8.png presentation-9.png presentation.sh
 PROTO_FILES=		proto.common.etc
 PROTO_FILES+=		proto.common.dynamic
 PROGRAMS=		# defined

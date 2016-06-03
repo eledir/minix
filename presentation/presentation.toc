@@ -1,2 +1,5 @@
 \beamer@endinputifotherversion {3.33pt}
 \select@language {french}
+\beamer@sectionintoc {1}{Pr\IeC {\'e}sentation du projet}{3}{0}{1}
+\beamer@sectionintoc {2}{Gestion du projet}{6}{0}{2}
+\beamer@sectionintoc {3}{Etat du projet}{11}{0}{3}
