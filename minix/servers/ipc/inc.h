@@ -44,6 +44,18 @@
 /* main.c */
 void update_sem_sub(int);
 
+/* posix_sem.c */
+int do_posixsem_close(message *);
+int do_posixsem_destroy(message *);
+int do_posixsem_getvalue(message *);
+int do_posixsem_init(message *);
+int do_posixsem_post(message *);
+int do_posixsem_timedwait(message *);
+int do_posixsem_trywait(message *);
+int do_posixsem_unlink(message *);
+int do_posixsem_wait(message *);
+int do_posixsem_open(message *);
+
 /* shm.c */
 int do_shmget(message *);
 int do_shmat(message *);

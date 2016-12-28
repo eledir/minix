@@ -422,6 +422,78 @@ typedef struct {
 _ASSERT_MSG_SIZE(mess_lc_ipc_shmget);
 
 typedef struct {
+	unsigned	sem;
+	uint8_t		padding[52];
+} mess_lc_ipc_posix_sem_close;
+_ASSERT_MSG_SIZE(mess_lc_ipc_posix_sem_close);
+
+typedef struct {
+	unsigned	sem;
+	uint8_t		padding[52];
+} mess_lc_ipc_posix_sem_destroy;
+_ASSERT_MSG_SIZE(mess_lc_ipc_posix_sem_destroy);
+
+typedef struct {
+	unsigned	sem;
+	int		retvalue;
+	uint8_t		padding[48];
+} mess_lc_ipc_posix_sem_getvalue;
+_ASSERT_MSG_SIZE(mess_lc_ipc_posix_sem_getvalue);
+
+typedef struct {
+	unsigned	retsem;
+	int		pshared;
+	int		value;
+	uint8_t		padding[44];
+} mess_lc_ipc_posix_sem_init;
+_ASSERT_MSG_SIZE(mess_lc_ipc_posix_sem_init);
+
+typedef struct {
+	unsigned	sem;
+	uint8_t		padding[52];
+} mess_lc_ipc_posix_sem_post;
+_ASSERT_MSG_SIZE(mess_lc_ipc_posix_sem_post);
+
+typedef struct {
+	unsigned	sem;
+	time_t		seconds;
+	long		nanoseconds;
+	uint8_t		padding[40];
+} mess_lc_ipc_posix_sem_timedwait;
+_ASSERT_MSG_SIZE(mess_lc_ipc_posix_sem_timedwait);
+
+typedef struct {
+	unsigned	sem;
+	uint8_t		padding[52];
+} mess_lc_ipc_posix_sem_trywait;
+_ASSERT_MSG_SIZE(mess_lc_ipc_posix_sem_trywait);
+
+typedef struct {
+	unsigned	sem;
+	cp_grant_id_t	grant;
+	size_t		name_len;
+	uint8_t		padding[44];
+} mess_lc_ipc_posix_sem_unlink;
+_ASSERT_MSG_SIZE(mess_lc_ipc_posix_sem_unlink);
+
+typedef struct {
+	unsigned	sem;
+	uint8_t		padding[52];
+} mess_lc_ipc_posix_sem_wait;
+_ASSERT_MSG_SIZE(mess_lc_ipc_posix_sem_wait);
+
+typedef struct {
+	unsigned	retsem;
+	cp_grant_id_t	grant;
+	size_t		name_len;
+	int		oflag;
+	mode_t		mode;
+	unsigned	value;
+	uint8_t		padding[32];
+} mess_lc_ipc_posix_sem_open;
+_ASSERT_MSG_SIZE(mess_lc_ipc_posix_sem_open);
+
+typedef struct {
 	vir_bytes	oldp;
 	size_t		oldlen;
 	vir_bytes	newp;
@@ -2236,6 +2308,16 @@ typedef struct noxfer_message {
 		mess_lc_ipc_shmctl	m_lc_ipc_shmctl;
 		mess_lc_ipc_shmdt	m_lc_ipc_shmdt;
 		mess_lc_ipc_shmget	m_lc_ipc_shmget;
+		mess_lc_ipc_posix_sem_close	m_lc_ipc_posix_sem_close;
+		mess_lc_ipc_posix_sem_destroy	m_lc_ipc_posix_sem_destroy;
+		mess_lc_ipc_posix_sem_getvalue	m_lc_ipc_posix_sem_getvalue;
+		mess_lc_ipc_posix_sem_init	m_lc_ipc_posix_sem_init;
+		mess_lc_ipc_posix_sem_post	m_lc_ipc_posix_sem_post;
+		mess_lc_ipc_posix_sem_timedwait	m_lc_ipc_posix_sem_timedwait;
+		mess_lc_ipc_posix_sem_trywait	m_lc_ipc_posix_sem_trywait;
+		mess_lc_ipc_posix_sem_unlink	m_lc_ipc_posix_sem_unlink;
+		mess_lc_ipc_posix_sem_wait	m_lc_ipc_posix_sem_wait;
+		mess_lc_ipc_posix_sem_open	m_lc_ipc_posix_sem_open;
 		mess_lc_mib_sysctl	m_lc_mib_sysctl;
 		mess_lc_pm_exec		m_lc_pm_exec;
 		mess_lc_pm_exit		m_lc_pm_exit;

@@ -17,6 +17,16 @@ static int (* const call_vec[])(message *) = {
 	CALL(IPC_SEMGET)	= do_semget,
 	CALL(IPC_SEMCTL)	= do_semctl,
 	CALL(IPC_SEMOP)		= do_semop,
+	CALL(IPC_POSIXSEM_CLOSE)        = do_posixsem_close,
+	CALL(IPC_POSIXSEM_DESTROY)      = do_posixsem_destroy,
+	CALL(IPC_POSIXSEM_GETVALUE)     = do_posixsem_getvalue,
+	CALL(IPC_POSIXSEM_INIT)         = do_posixsem_init,
+	CALL(IPC_POSIXSEM_POST)         = do_posixsem_post,
+	CALL(IPC_POSIXSEM_TIMEDWAIT)    = do_posixsem_timedwait,
+	CALL(IPC_POSIXSEM_TRYWAIT)      = do_posixsem_trywait,
+	CALL(IPC_POSIXSEM_UNLINK)       = do_posixsem_unlink,
+	CALL(IPC_POSIXSEM_WAIT)         = do_posixsem_wait,
+	CALL(IPC_POSIXSEM_OPEN)         = do_posixsem_open,
 };
 
 /*

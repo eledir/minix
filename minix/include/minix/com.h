@@ -793,6 +793,18 @@
 #define IPC_SEMCTL	(IPC_BASE+6)
 #define IPC_SEMOP	(IPC_BASE+7)
 
+/* POSIX Semaphore */
+#define IPC_POSIXSEM_CLOSE	(IPC_BASE+8)
+#define IPC_POSIXSEM_DESTROY	(IPC_BASE+9)
+#define IPC_POSIXSEM_GETVALUE	(IPC_BASE+10)
+#define IPC_POSIXSEM_INIT	(IPC_BASE+11)
+#define IPC_POSIXSEM_POST	(IPC_BASE+12)
+#define IPC_POSIXSEM_TIMEDWAIT	(IPC_BASE+13)
+#define IPC_POSIXSEM_TRYWAIT	(IPC_BASE+14)
+#define IPC_POSIXSEM_UNLINK	(IPC_BASE+15)
+#define IPC_POSIXSEM_WAIT	(IPC_BASE+16)
+#define IPC_POSIXSEM_OPEN	(IPC_BASE+17)
+
 /*===========================================================================*
  *                Messages for Scheduling				     *
  *===========================================================================*/
