@@ -23,7 +23,7 @@ static ssize_t m_read(devminor_t minor, u64_t position, endpoint_t endpt,
 static ssize_t m_write(devminor_t minor, u64_t position, endpoint_t endpt,
 	cp_grant_id_t grant, size_t size, int flags, cdev_id_t id);
 static int m_open(devminor_t minor, int access, endpoint_t user_endpt);
-static int m_select(devminor_t, unsigned int, endpoint_t);
+static int m_close(devminor_t UNUSED(minor));
 
 static u8_t* mboxbuffer_vir;	/* Address of dss phys memory map */
 static phys_bytes mboxbuffer_phys;
@@ -31,9 +31,9 @@ static phys_bytes mboxbuffer_phys;
 /* Entry points to this driver. */
 static struct chardriver m_dtab = {
   .cdr_open		= m_open,	/* open device */
+  .cdr_close	= m_close,
   .cdr_read		= m_read,	/* read from device */
   .cdr_write	= m_write,	/* write to device (seeding it) */
-  .cdr_select	= m_select,	/* select hook */
 };
 
 static struct log log = {
@@ -42,6 +42,7 @@ static struct log log = {
 	.log_func = default_log
 };
 
+static int hook_id = 1;
 /*===========================================================================*
  *				   main 				     *
  *===========================================================================*/
@@ -80,7 +81,6 @@ static int sef_cb_init_fresh(int UNUSED(type), sef_init_info_t *UNUSED(info))
 
 	mailbox_init();
 
-	int hook_id = 1;
 	if (sys_irqsetpolicy(MBOX_IRQ, 0, &hook_id) != OK) {
 		log_warn(&log, "mailbox: couldn't set IRQ policy %d\n",
 		    MBOX_IRQ);
@@ -124,7 +124,6 @@ static ssize_t m_read(devminor_t minor, u64_t position, endpoint_t endpt,
 	return(OK);
 }
 
-static int hook_id = 1;
 
 static int wait_irq()
 {
@@ -195,14 +194,7 @@ static int m_open(devminor_t minor, int access, endpoint_t user_endpt)
 		return(ENXIO);
 }
 
-static int m_select(devminor_t minor, unsigned int ops, endpoint_t endpt)
+static int m_close(devminor_t UNUSED(minor))
 {
-	/* mailbox device is always writable; it's infinitely readable
-	 * once seeded, and doesn't block when it's not, so all operations
-	 * are instantly possible. we ignore CDEV_OP_ERR.
-	 */
-	int ready_ops = 0;
-	if (minor != MAILBOX_DEV) 
-		return(EIO);
-	return ops & (CDEV_OP_RD | CDEV_OP_WR);
+    return (OK);
 }

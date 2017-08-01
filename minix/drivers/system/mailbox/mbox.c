@@ -30,7 +30,7 @@ uint32_t mbox_base;
  */
 static struct log log = {
 	.name = "mailbox",
-	.log_level = LEVEL_INFO,
+	.log_level = LEVEL_DEBUG,
 	.log_func = default_log
 };
 
@@ -80,7 +80,7 @@ uint32_t mbox_read(uint8_t chan)
 		while (read32(gmailbox->status) & MAILBOX_EMPTY)
 			log_debug(&log, "status: 0x%x\n", read32(gmailbox->status));
 
-		log_info(&log, "0x%08x\n", read32(gmailbox->status));
+		log_debug(&log, "0x%08x\n", read32(gmailbox->status));
 		data = read32(gmailbox->read);
 
 		log_debug(&log, "received data %d\n", data);
