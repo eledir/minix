@@ -13,6 +13,9 @@ d--755 0 0
 		umount ---755 0 0 umount
 		grep ---755 0 0 grep
 		dd ---755 0 0 dd
+		i2cscan ---755 0 0 i2cscan
+		ps ---755 0 0 ps
+		playwave ---755 0 0 playwave
 		sh ---755 0 0 sh
 		service ---755 0 0 service
 	$
@@ -29,9 +32,12 @@ d--755 0 0
 		isofs ---755 0 0 isofs
 #endif
 #ifdef __arm__
-		rpi_mmc ---755 0 0 rpi_mmc
-		omap_mmc ---755 0 0 omap_mmc
+		i2c ---755 0 0 i2c
 		mailbox ---755 0 0 mailbox
+		omap_mmc ---755 0 0 omap_mmc
+		pcm ---755 0 0 pcm
+		rpi_mmc ---755 0 0 rpi_mmc
+		spi ---755 0 0 spi
 #endif
 		mfs ---755 0 0 mfs
 		procfs ---755 0 0 procfs

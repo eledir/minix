@@ -26,7 +26,7 @@ RAMDISK_DEFINES= \
 PROTO=			proto
 
 # Common to all architectures
-ETC=			system.conf group
+ETC=			system.conf group completed.wav
 EXTRA=			rc
 PROTO_FILES=	proto.common.etc
 PROTO_FILES+=	proto.common.dynamic
@@ -37,6 +37,8 @@ PROGRAMS+=		grep
 dir.grep:=		minix/usr.bin/grep
 PROGRAMS+=		dd
 dir.dd:=		bin/dd
+PROGRAMS+=		i2cscan
+dir.i2cscan:=	usr.sbin/i2cscan
 PROGRAMS+=		input
 dir.input:=		minix/servers/input
 PROGRAMS+=		loadramdisk
@@ -45,6 +47,8 @@ PROGRAMS+=		mfs
 dir.mfs:=		minix/fs/mfs
 PROGRAMS+=		mount
 dir.mount:=		minix/commands/mount
+PROGRAMS+=		playwave
+dir.playwave:=	minix/commands/playwave
 PROGRAMS+=		procfs
 dir.procfs:=	minix/fs/procfs
 PROGRAMS+=		service
@@ -94,12 +98,18 @@ dir.acpi:=		minix/drivers/power/acpi
 .endif # ${MACHINE_ARCH} == "i386"
 
 .if ${MACHINE_ARCH} == "earm"
+PROGRAMS+=		i2c
+dir.i2c:=		minix/drivers/bus/i2c
 PROGRAMS+=		omap_mmc
 dir.omap_mmc:=	minix/drivers/storage/mmc
 PROGRAMS+=		rpi_mmc
 dir.rpi_mmc:=	minix/drivers/storage/mmc
 PROGRAMS+=		mailbox
 dir.mailbox:=	minix/drivers/system/mailbox
+PROGRAMS+= 		spi
+dir.spi:=		minix/drivers/bus/spi
+PROGRAMS+=		pcm
+dir.pcm:=		minix/drivers/audio/pcm
 .endif # ${MACHINE_ARCH} == "earm"
 
 .if ${LDSTATIC} == "-dynamic"

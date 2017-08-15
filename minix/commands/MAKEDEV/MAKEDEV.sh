@@ -14,9 +14,11 @@ EXIT=0
 # console => lp tty log
 # boot    => kmem mem null ram zero
 RAMDISK_DEVICES="
+	audio
 	boot
 	console
 	input
+	spi
 	c0d0 c0d0p0 c0d0p0s0 c0d1 c0d1p0 c0d1p0s0
 	c0d2 c0d2p0 c0d2p0s0 c0d3 c0d3p0 c0d3p0s0
 	c0d4 c0d4p0 c0d4p0s0 c0d5 c0d5p0 c0d5p0s0
@@ -26,6 +28,7 @@ RAMDISK_DEVICES="
 	c1d4 c1d4p0 c1d4p0s0 c1d5 c1d5p0 c1d5p0s0
 	c1d6 c1d6p0 c1d6p0s0 c1d7 c1d7p0 c1d7p0s0
 	fd0 fd1 fd0p0 fd1p0
+	i2c-1 i2c-2 i2c-3
 	mailbox
 	pci
 	ttyc1 ttyc2 ttyc3 tty00 tty01 tty02 tty03
@@ -407,6 +410,9 @@ do
 		major=`expr ${bus} + 49`
 
 		makedev sht21b${bus}s40 c ${major} 0 ${uname} ${gname} 444
+		;;
+	spi)
+		makedev spi c 50 0 ${uname} ${gname} ${permissions}
 		;;
 	tsl2550b[1-3]s39)
 		# Weather Cape: ambient light sensor
