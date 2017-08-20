@@ -52,18 +52,6 @@
 #define STP     1
 #define STT     0
 
-#define CLKACTIVITY_S 9
-#define CLKACTIVITY_I 8
-#define SMART_WAKE_UP 4
-#define NO_IDLE_MODE 3
-#define SRST     1
-#define AUTOIDLE 0
-
-#define RDONE 0
-
-#define RXFIFO_CLR 14
-#define TXFIFO_CLR  6
-
 #define BCM283X_STATUS_TA	0x01
 #define BCM283X_STATUS_DONE	0x02
 #define BCM283X_STATUS_TXW 	0x04
