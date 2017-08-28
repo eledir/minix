@@ -76,13 +76,14 @@ static spi_regs_t spi_reg = {
 
 vir_bytes io_base;
 spi_regs_t *rpi_spi_bus;
+int spi_bus_id;
 
 /*
  * Define a structure to be used for logging
  */
 static struct log log = {
 	.name = "spi",
-	.log_level = LEVEL_DEBUG,
+	.log_level = LEVEL_INFO,
 	.log_func = default_log
 };
 
@@ -102,7 +103,7 @@ static struct log log = {
 static int spi_reset()
 {
 	/* Disable interrupts */
-	spi_set32(rpi_spi_bus->CS, SPI_CS_INTR | SPI_CS_INTD | SPI_CS_DMAEN | SPI_CS_TA, 0);
+	spi_set32(rpi_spi_bus->CS, SPI_CS_INTR | SPI_CS_INTD | SPI_CS_TA, 0);
 	/* Clear fifo */
 	spi_set32(rpi_spi_bus->CS, SPI_CS_RX_CLEAR | SPI_CS_TX_CLEAR, 
 		SPI_CS_RX_CLEAR | SPI_CS_TX_CLEAR);
@@ -115,26 +116,65 @@ static void spi_padconf()
 {
 	int r;
 	uint32_t pinopts;
-
-	pinopts = CONTROL_BCM_CONF_SPI0_MISO |
-		CONTROL_BCM_CONF_SPI0_CE1 | CONTROL_BCM_CONF_SPI0_CE0;
+	switch(spi_bus_id) {
+		case 0:
+			pinopts = CONTROL_BCM_CONF_SPI0_MISO |
+				CONTROL_BCM_CONF_SPI0_CE1 | CONTROL_BCM_CONF_SPI0_CE0;
 	
-	r = sys_padconf(GPFSEL09, pinopts,
-		pinopts);
-	if (r != OK) {
-		log_warn(&log, "padconf failed (r=%d)\n", r);
-	}
+			r = sys_padconf(GPFSEL09, pinopts,
+				pinopts);
+			if (r != OK) {
+				log_warn(&log, "sys_padconfnf failed (r=%d)\n", r);
+			}
 
-	log_debug(&log, "pinopts=0x%x\n", pinopts);
+			log_debug(&log, "pinopts=0x%x\n", pinopts);
 
-	pinopts = CONTROL_BCM_CONF_SPI0_MOSI | CONTROL_BCM_CONF_SPI0_SCLK;
-	r = sys_padconf(GPFSEL1019, pinopts,
-	    pinopts);
-	if (r != OK) {
-		log_warn(&log, "padconf failed (r=%d)\n", r);
-	}
+			pinopts = CONTROL_BCM_CONF_SPI0_MOSI | CONTROL_BCM_CONF_SPI0_SCLK;
+			r = sys_padconf(GPFSEL1019, pinopts,
+				pinopts);
+			if (r != OK) {
+				log_warn(&log, "padconf failed (r=%d)\n", r);
+			}
 	
-	log_debug(&log, "pinopts=0x%x\n", pinopts);
+			log_debug(&log, "pinopts=0x%x\n", pinopts);
+			break;
+		case 1:
+			pinopts = CONTROL_BCM_CONF_SPI1_MISO |
+				CONTROL_BCM_CONF_SPI1_CE1 | CONTROL_BCM_CONF_SPI1_CE0 |
+				CONTROL_BCM_CONF_SPI1_CE2;
+	
+			r = sys_padconf(GPFSEL1019, pinopts,
+				pinopts);
+			if (r != OK) {
+				log_warn(&log, "sys_padconfnf failed (r=%d)\n", r);
+			}
+
+			log_debug(&log, "pinopts=0x%x\n", pinopts);
+
+			pinopts = CONTROL_BCM_CONF_SPI1_MOSI | CONTROL_BCM_CONF_SPI1_SCLK;
+			r = sys_padconf(GPFSEL2029, pinopts,
+		    	pinopts);
+			if (r != OK) {
+				log_warn(&log, "padconf failed (r=%d)\n", r);
+			}
+	
+			log_debug(&log, "pinopts=0x%x\n", pinopts);
+			break;
+		case 2:
+			pinopts = CONTROL_BCM_CONF_SPI2_MISO | CONTROL_BCM_CONF_SPI2_CE2 |
+				CONTROL_BCM_CONF_SPI2_CE1 | CONTROL_BCM_CONF_SPI2_CE0 |
+				CONTROL_BCM_CONF_SPI2_MOSI | CONTROL_BCM_CONF_SPI2_SCLK;
+	
+			r = sys_padconf(GPFSEL4049, pinopts,
+				pinopts);
+			if (r != OK) {
+				log_warn(&log, "sys_padconfnf failed (r=%d)\n", r);
+			}
+
+			log_debug(&log, "pinopts=0x%x\n", pinopts);
+
+			break;
+	}
 }
 
 static int spi_open(devminor_t UNUSED(minor), int UNUSED(access),
@@ -235,6 +275,7 @@ static int spi_transfer(uint32_t size, int mode)
 	log_debug(&log, "size %d\n", size);
 
 	if (mode == WRITE_MODE) {
+		spi_set32(rpi_spi_bus->CS, SPI_CS_REN, 0);
 		retv = spi_write_bytes(size);
 	} else {
 		spi_set32(rpi_spi_bus->CS, SPI_CS_REN, SPI_CS_REN);
@@ -367,7 +408,7 @@ static int sef_cb_init(int type, sef_init_info_t *UNUSED(info))
 	spi_reset();
 
 	/* Enable interrupts */
-	spi_set32(rpi_spi_bus->CS, SPI_CS_INTR | SPI_CS_INTD | SPI_CS_DMAEN | SPI_CS_TA,
+	spi_set32(rpi_spi_bus->CS, SPI_CS_INTR | SPI_CS_INTD | SPI_CS_TA,
 		SPI_CS_INTR | SPI_CS_INTD | SPI_CS_TA);
 
 	chardriver_announce();
@@ -376,9 +417,37 @@ static int sef_cb_init(int type, sef_init_info_t *UNUSED(info))
 	return OK;
 }
 
-int main(void)
+static int
+env_parse_instance(void)
+{
+	int r;
+	long instance;
+
+	/* Parse the instance number passed to service */
+	instance = 0;
+	r = env_parse("instance", "d", 0, &instance, 1, 3);
+	if (r == -1) {
+		log_warn(&log,
+		    "Expecting '-arg instance=N' argument (N=1..3)\n");
+		return EXIT_FAILURE;
+	}
+
+	/* Device files count from 1, hardware starts counting from 0 */
+	spi_bus_id = instance - 1;
+
+	return OK;
+}
+
+int main(int argc, char *argv[])
 {
 	struct minix_mem_range mr;
+	int r;
+	env_setargs(argc, argv);
+
+	r = env_parse_instance();
+	if (r != OK) {
+		return r;
+	}
 
 	/* Configure memory access */
 	mr.mr_base = SPI_BASE;	/* start addr */
