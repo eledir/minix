@@ -241,7 +241,7 @@ rpi_i2c_padconf(int i2c_bus_id)
 	case 0:
 		pinopts |= CONTROL_BCM_CONF_I2C0_SDA | CONTROL_BCM_CONF_I2C0_SCL;
 	
-		r = sys_padconf(GPFSEL09, 0xffffffff,
+		r = sys_padconf(GPFSEL09, pinopts,
 		    pinopts);
 		if (r != OK) {
 			log_warn(&log, "padconf failed (r=%d)\n", r);
@@ -253,7 +253,7 @@ rpi_i2c_padconf(int i2c_bus_id)
 	case 1:
 		pinopts |= CONTROL_BCM_CONF_I2C1_SDA | CONTROL_BCM_CONF_I2C1_SCL;
 	
-		r = sys_padconf(GPFSEL09, 0xffffffff,
+		r = sys_padconf(GPFSEL09, pinopts,
 		    pinopts);
 		if (r != OK) {
 			log_warn(&log, "padconf failed (r=%d)\n", r);
@@ -341,7 +341,7 @@ rpi_i2c_bus_init(void)
 	if (divider & 0x01)
 		divider++;
 
-	write32(rpi_i2c_bus->mapped_addr + rpi_i2c_bus->regs->DIV, 1500);
+	write32(rpi_i2c_bus->mapped_addr + rpi_i2c_bus->regs->DIV, 1500); // Speed is 100kHz
 
 	/* Set own I2C address */
 	write32(rpi_i2c_bus->mapped_addr + rpi_i2c_bus->regs->SL_ADDR, I2C_OWN_ADDRESS);
