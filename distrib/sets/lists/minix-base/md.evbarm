@@ -25,6 +25,7 @@
 ./service/omap_emmc                                     minix-base
 ./service/omap_mmc                                      minix-base
 ./service/pcm                                           minix-base
+./service/pwmjack                                       minix-base
 ./service/rpi_mmc                                       minix-base
 ./service/rpi_emmc                                      minix-base
 ./service/random                                        minix-base

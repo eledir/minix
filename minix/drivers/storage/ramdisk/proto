@@ -14,8 +14,6 @@ d--755 0 0
 		grep ---755 0 0 grep
 		dd ---755 0 0 dd
 		i2cscan ---755 0 0 i2cscan
-		ps ---755 0 0 ps
-		playwave ---755 0 0 playwave
 		sh ---755 0 0 sh
 		service ---755 0 0 service
 	$
@@ -36,6 +34,7 @@ d--755 0 0
 		mailbox ---755 0 0 mailbox
 		omap_mmc ---755 0 0 omap_mmc
 		pcm ---755 0 0 pcm
+		pwmjack ---755 0 0 pwmjack
 		rpi_mmc ---755 0 0 rpi_mmc
 		spi ---755 0 0 spi
 #endif
